@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "780637460480",
+    "project_id": "bombadagua-ac54e",
+    "storage_bucket": "bombadagua-ac54e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:780637460480:android:547918c2119268913ea0e5",
+        "android_client_info": {
+          "package_name": "com.example.bombadagua"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwtlJKqhdiWtZdMqtvgM69O_NJqQeGYnY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
