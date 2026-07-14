@@ -27,7 +27,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String NOME_HC05 = "HC-05";
 
     private BluetoothHelper bluetoothHelper;
-
     private TextView tvConsumoHoje;
     private TextView tvVazaoAtual;
     private TextView tvAguaPoupada;
@@ -54,7 +53,6 @@ public class MainActivity extends AppCompatActivity {
         Button btnVerHistorico = findViewById(R.id.btnVerHistorico);
 
         FirestoreHelper firestoreHelper = new FirestoreHelper();
-
         firestoreHelper.observarUltimaLeitura(new FirestoreHelper.OnLeituraListener() {
             @Override
             public void onLeituraRecebida(double vazaoAtual, double litrosHoje, double aguaPoupada) {
@@ -82,7 +80,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         bluetoothHelper = new BluetoothHelper(this::processarDados);
-
         bluetoothHelper.setStatusListener(new BluetoothHelper.OnStatusListener() {
             @Override
             public void onConectado() {
@@ -111,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    android.util.Log.e("FIREBASE_DEBUG", "Erro: " + e.getMessage());
+                    android.util.Log.e("FIREBASE_DEBUG", "Erro ao buscar: " + e.getMessage());
                 });
     }
 
@@ -133,12 +130,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
         if (requestCode == CODIGO_PERMISSAO_BLUETOOTH) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 conectarComArduino();
             } else {
-                Toast.makeText(this, "Permissão de Bluetooth negada. Não é possível conectar ao Arduino.",
+                Toast.makeText(this, "Permissão de Bluetooth negada.",
                         Toast.LENGTH_LONG).show();
             }
         }
