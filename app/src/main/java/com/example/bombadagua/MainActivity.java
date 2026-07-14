@@ -1,6 +1,7 @@
 package com.example.bombadagua;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -10,6 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -23,7 +25,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int CODIGO_PERMISSAO_BLUETOOTH = 100;
+    private static final int CODIO_PERMISSAO_BLUETOOTH = 100;
     private static final String NOME_HC05 = "HC-05";
 
     private BluetoothHelper bluetoothHelper;
@@ -54,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
         FirestoreHelper firestoreHelper = new FirestoreHelper();
         firestoreHelper.observarUltimaLeitura(new FirestoreHelper.OnLeituraListener() {
+            @SuppressLint("DefaultLocale")
             @Override
             public void onLeituraRecebida(double vazaoAtual, double litrosHoje, double aguaPoupada) {
                 android.util.Log.e("FIRESTORE", "onLeituraRecebida CHAMADO! vazao=" + vazaoAtual);
@@ -104,12 +107,10 @@ public class MainActivity extends AppCompatActivity {
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     if (!queryDocumentSnapshots.isEmpty()) {
                         QueryDocumentSnapshot doc = (QueryDocumentSnapshot) queryDocumentSnapshots.getDocuments().get(0);
-                        android.util.Log.e("FIREBASE_DEBUG", "ESTRUTURA COMPLETA: " + doc.getData().toString());
+                        android.util.Log.e("FIREBASE_DEBUG", "ESTRUTURA COMPLETA: " + doc.getData());
                     }
                 })
-                .addOnFailureListener(e -> {
-                    android.util.Log.e("FIREBASE_DEBUG", "Erro ao buscar: " + e.getMessage());
-                });
+                .addOnFailureListener(e -> android.util.Log.e("FIREBASE_DEBUG", "Erro ao buscar: " + e.getMessage()));
     }
 
     private void verificarPermissoesEConectar() {
@@ -120,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
             if (!temConnect) {
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.BLUETOOTH_CONNECT},
-                        CODIGO_PERMISSAO_BLUETOOTH);
+                        CODIO_PERMISSAO_BLUETOOTH);
                 return;
             }
         }
@@ -128,9 +129,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == CODIGO_PERMISSAO_BLUETOOTH) {
+        if (requestCode == CODIO_PERMISSAO_BLUETOOTH) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 conectarComArduino();
             } else {
