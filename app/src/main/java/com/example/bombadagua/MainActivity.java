@@ -24,13 +24,10 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 public class MainActivity extends AppCompatActivity {
 
     private static final int CODIGO_PERMISSAO_BLUETOOTH = 100;
-
-    // Troque pelo nome exato do seu módulo (aparece nas configs de Bluetooth do celular)
     private static final String NOME_HC05 = "HC-05";
 
     private BluetoothHelper bluetoothHelper;
 
-    // Views que serão atualizadas com os dados recebidos do Arduino
     private TextView tvConsumoHoje;
     private TextView tvVazaoAtual;
     private TextView tvAguaPoupada;
@@ -51,9 +48,7 @@ public class MainActivity extends AppCompatActivity {
         tvVazaoAtual = findViewById(R.id.tvVazaoAtual);
         tvAguaPoupada = findViewById(R.id.tvAguaPoupada);
 
-        // ===== DEBUG DO FIREBASE =====
         debugarFirestore();
-        // =============================
 
         Button btnVerAlerta = findViewById(R.id.btnVerAlerta);
         Button btnVerHistorico = findViewById(R.id.btnVerHistorico);
@@ -86,7 +81,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // Cria o helper: sempre que uma linha de dado chegar do Arduino, processarDados() é chamado
         bluetoothHelper = new BluetoothHelper(this::processarDados);
 
         bluetoothHelper.setStatusListener(new BluetoothHelper.OnStatusListener() {
@@ -104,9 +98,6 @@ public class MainActivity extends AppCompatActivity {
         verificarPermissoesEConectar();
     }
 
-    /**
-     * Debug: mostra a estrutura completa do documento no Firestore
-     */
     private void debugarFirestore() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("leituras")
@@ -124,12 +115,8 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    /**
-     * Verifica se as permissões de Bluetooth foram concedidas.
-     * Se não, pede pro usuário. Se sim, já tenta conectar.
-     */
     private void verificarPermissoesEConectar() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             boolean temConnect = ContextCompat.checkSelfPermission(this,
                     Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
 
@@ -140,8 +127,6 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
         }
-        // Em versões antigas (< Android 12), não precisa pedir permissão em tempo de execução
-        // para Bluetooth clássico, então já pode conectar direto.
         conectarComArduino();
     }
 
@@ -171,29 +156,7 @@ public class MainActivity extends AppCompatActivity {
         bluetoothHelper.conectarPorNome(NOME_HC05);
     }
 
-    /**
-     * TODO: Preencher quando o formato de dados do Arduino for decidido.
-     *
-     * Esse método é chamado toda vez que uma linha completa chega do Arduino
-     * (já filtrada, sem quebra de linha, sem espaços nas pontas).
-     *
-     * Exemplos de como ficaria dependendo do formato escolhido:
-     *
-     * — Se for um número só (ex: "4.2"):
-     *     double vazao = Double.parseDouble(linha);
-     *     tvVazaoAtual.setText(String.format("%.1f L/min", vazao));
-     *
-     * — Se for vários valores separados por vírgula (ex: "4.2,86,312"):
-     *     String[] partes = linha.split(",");
-     *     double vazao = Double.parseDouble(partes[0]);
-     *     int litrosHoje = Integer.parseInt(partes[1]);
-     *     int aguaPoupada = Integer.parseInt(partes[2]);
-     *     tvVazaoAtual.setText(String.format("%.1f L/min", vazao));
-     *     tvConsumoHoje.setText(String.valueOf(litrosHoje));
-     *     tvAguaPoupada.setText(aguaPoupada + " L");
-     */
     private void processarDados(String linha) {
-        // Por enquanto, só mostra no Logcat pra você ver os dados chegando
         android.util.Log.d("BLUETOOTH_ARDUINO", "Dado recebido: " + linha);
     }
 
