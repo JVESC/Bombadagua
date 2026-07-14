@@ -17,6 +17,10 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int CODIGO_PERMISSAO_BLUETOOTH = 100;
@@ -46,6 +50,10 @@ public class MainActivity extends AppCompatActivity {
         tvConsumoHoje = findViewById(R.id.tvConsumoHoje);
         tvVazaoAtual = findViewById(R.id.tvVazaoAtual);
         tvAguaPoupada = findViewById(R.id.tvAguaPoupada);
+
+        // ===== DEBUG DO FIREBASE =====
+        debugarFirestore();
+        // =============================
 
         Button btnVerAlerta = findViewById(R.id.btnVerAlerta);
         Button btnVerHistorico = findViewById(R.id.btnVerHistorico);
@@ -94,6 +102,26 @@ public class MainActivity extends AppCompatActivity {
         });
 
         verificarPermissoesEConectar();
+    }
+
+    /**
+     * Debug: mostra a estrutura completa do documento no Firestore
+     */
+    private void debugarFirestore() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("leituras")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        QueryDocumentSnapshot doc = (QueryDocumentSnapshot) queryDocumentSnapshots.getDocuments().get(0);
+                        android.util.Log.e("FIREBASE_DEBUG", "ESTRUTURA COMPLETA: " + doc.getData().toString());
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("FIREBASE_DEBUG", "Erro: " + e.getMessage());
+                });
     }
 
     /**
