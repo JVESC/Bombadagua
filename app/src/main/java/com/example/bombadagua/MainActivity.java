@@ -50,6 +50,24 @@ public class MainActivity extends AppCompatActivity {
         Button btnVerAlerta = findViewById(R.id.btnVerAlerta);
         Button btnVerHistorico = findViewById(R.id.btnVerHistorico);
 
+        FirestoreHelper firestoreHelper = new FirestoreHelper();
+
+        firestoreHelper.observarUltimaLeitura(new FirestoreHelper.OnLeituraListener() {
+            @Override
+            public void onLeituraRecebida(double vazaoAtual, double litrosHoje, double aguaPoupada) {
+                android.util.Log.e("FIRESTORE", "onLeituraRecebida CHAMADO! vazao=" + vazaoAtual);
+                tvVazaoAtual.setText(String.format("%.1f L/min", vazaoAtual));
+                tvConsumoHoje.setText(String.format("%.0f", litrosHoje));
+                tvAguaPoupada.setText(String.format("%.0f L", aguaPoupada));
+                android.util.Log.e("FIRESTORE", "Texto definido: " + tvVazaoAtual.getText());
+            }
+
+            @Override
+            public void onErro(String mensagem) {
+                android.util.Log.e("FIRESTORE", mensagem);
+            }
+        });
+
         btnVerAlerta.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, VazamentoActivity.class);
             startActivity(intent);

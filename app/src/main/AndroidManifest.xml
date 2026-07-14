@@ -4,6 +4,7 @@
     <!-- Adicionar essas linhas ANTES da tag <application>, dentro de <manifest> -->
 
     <!-- Permissões clássicas (funcionam em qualquer versão do Android) -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
 
