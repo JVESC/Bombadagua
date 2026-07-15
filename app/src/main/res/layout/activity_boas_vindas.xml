@@ -9,58 +9,51 @@
     tools:context=".BoasVindasActivity">
 
     <!-- Ícone / símbolo do app -->
+
+
+    <!-- Slogan / subtítulo -->
+
+    <!-- Botão Entrar (login) -->
+
     <ImageView
         android:id="@+id/ivLogo"
         android:layout_width="180dp"
         android:layout_height="180dp"
+        android:layout_marginTop="128dp"
         android:contentDescription="Logo Água Justa"
         android:src="@drawable/logo_agua_justa"
-        app:layout_constraintBottom_toTopOf="@id/tvNomeApp"
+        app:layout_constraintBottom_toTopOf="@+id/tvSlogan"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.28"
         app:layout_constraintVertical_chainStyle="packed" />
 
-    <!-- Nome do app -->
-    <TextView
-        android:id="@+id/tvNomeApp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:fontFamily="sans-serif-medium"
-        android:text="Água Justa"
-        android:textColor="#0D47A1"
-        android:textSize="32sp"
-        app:layout_constraintBottom_toTopOf="@id/tvSlogan"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/ivLogo" />
-
-    <!-- Slogan / subtítulo -->
     <TextView
         android:id="@+id/tvSlogan"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        android:layout_marginBottom="220dp"
         android:text="Desperdício zero no consumo de água"
         android:textAlignment="center"
         android:textColor="#757575"
         android:textSize="14sp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/btnLogin"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvNomeApp" />
+        app:layout_constraintTop_toBottomOf="@id/ivLogo" />
 
-    <!-- Botão Entrar (login) -->
-    <Button
+    <!-- Botão Cadastrar -->
+    <android.widget.Button
         android:id="@+id/btnLogin"
         android:layout_width="0dp"
         android:layout_height="56dp"
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="16dp"
-        android:backgroundTint="#0D47A1"
+        android:background="@drawable/bg_botao_azul"
         android:text="Entrar"
         android:textColor="#FFFFFF"
         android:textSize="16sp"
@@ -69,18 +62,16 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Botão Cadastrar -->
-    <Button
+    <android.widget.Button
         android:id="@+id/btnCadastrar"
         android:layout_width="0dp"
         android:layout_height="56dp"
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="16dp"
-        android:background="@drawable/bg_botao_preto"
-        android:backgroundTint="@null"
+        android:background="@drawable/bg_botao_outline_branco"
         android:text="Criar conta"
-        android:textColor="#0D47A1"
+        android:textColor="#000000"
         android:textSize="16sp"
         android:textAllCaps="false"
         app:layout_constraintBottom_toBottomOf="parent"

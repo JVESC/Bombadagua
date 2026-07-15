@@ -2,6 +2,8 @@ package com.example.bombadagua;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.InputType;
+import android.view.MotionEvent;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -42,6 +44,35 @@ public class LoginActivity extends AppCompatActivity {
         android.widget.LinearLayout btnVoltar = findViewById(R.id.btnVoltarLogin);
 
         btnVoltar.setOnClickListener(v -> finish());
+
+        // Alterna mostrar/esconder a senha ao tocar no ícone do olho
+        etSenha.setOnTouchListener((v, event) -> {
+            final int DRAWABLE_END = 2; // índice do drawable à direita (start=0, top=1, end=2, bottom=3)
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                if (etSenha.getCompoundDrawables()[DRAWABLE_END] != null) {
+                    float areaToque = etSenha.getWidth() - etSenha.getPaddingEnd()
+                            - etSenha.getCompoundDrawables()[DRAWABLE_END].getBounds().width();
+                    if (event.getX() >= areaToque) {
+                        boolean mostrandoSenha = etSenha.getInputType() ==
+                                (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+
+                        if (mostrandoSenha) {
+                            // Esconde a senha de novo
+                            etSenha.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                            etSenha.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_olho_fechado, 0);
+                        } else {
+                            // Mostra a senha em texto puro
+                            etSenha.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                            etSenha.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_olho_aberto, 0);
+                        }
+                        etSenha.setSelection(etSenha.getText().length());
+                        v.performClick();
+                        return true;
+                    }
+                }
+            }
+            return false;
+        });
 
         btnEntrar.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();

@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF"
-    android:padding="32dp"
+    android:padding="40dp"
     tools:context=".CadastroActivity">
 
     <!-- Botão voltar -->
@@ -14,11 +14,12 @@
         android:id="@+id/btnVoltarCadastro"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
+        android:background="?attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true"
-        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:minHeight="48dp"
+        android:orientation="horizontal"
         android:padding="8dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -26,15 +27,15 @@
         <ImageView
             android:layout_width="22dp"
             android:layout_height="22dp"
-            android:src="@drawable/ic_seta_voltar"
-            android:layout_marginEnd="8dp" />
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/ic_seta_voltar" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Voltar"
-            android:textSize="16sp"
-            android:textColor="#000000" />
+            android:textColor="#000000"
+            android:textSize="16sp" />
     </LinearLayout>
 
     <TextView
@@ -95,7 +96,7 @@
         android:layout_marginTop="16dp"
         android:autofillHints="newPassword"
         android:hint="Senha"
-        android:inputType="textPassword"
+        android:inputType="textVisiblePassword"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -109,7 +110,7 @@
         android:layout_marginTop="16dp"
         android:autofillHints="newPassword"
         android:hint="Confirmar senha"
-        android:inputType="textPassword"
+        android:inputType="textVisiblePassword"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         app:layout_constraintEnd_toEndOf="parent"
