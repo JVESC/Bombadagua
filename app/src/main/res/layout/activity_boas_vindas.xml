@@ -5,21 +5,21 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0D47A1"
+    android:background="#FFFFFF"
     tools:context=".BoasVindasActivity">
 
     <!-- Ícone / símbolo do app -->
-    <TextView
-        android:id="@+id/tvIcone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="💧"
-        android:textSize="72sp"
+    <ImageView
+        android:id="@+id/ivLogo"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        android:contentDescription="Logo Água Justa"
+        android:src="@drawable/logo_agua_justa"
         app:layout_constraintBottom_toTopOf="@id/tvNomeApp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.32"
+        app:layout_constraintVertical_bias="0.28"
         app:layout_constraintVertical_chainStyle="packed" />
 
     <!-- Nome do app -->
@@ -29,13 +29,13 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:fontFamily="sans-serif-medium"
-        android:text="BombaDágua"
-        android:textColor="#FFFFFF"
+        android:text="Água Justa"
+        android:textColor="#0D47A1"
         android:textSize="32sp"
         app:layout_constraintBottom_toTopOf="@id/tvSlogan"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvIcone" />
+        app:layout_constraintTop_toBottomOf="@id/ivLogo" />
 
     <!-- Slogan / subtítulo -->
     <TextView
@@ -43,9 +43,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Monitore seu consumo de água em tempo real"
+        android:text="Desperdício zero no consumo de água"
         android:textAlignment="center"
-        android:textColor="#BBDEFB"
+        android:textColor="#757575"
         android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -60,9 +60,9 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="16dp"
-        android:backgroundTint="#FFFFFF"
+        android:backgroundTint="#0D47A1"
         android:text="Entrar"
-        android:textColor="#0D47A1"
+        android:textColor="#FFFFFF"
         android:textSize="16sp"
         android:textAllCaps="false"
         app:layout_constraintBottom_toTopOf="@id/btnCadastrar"
@@ -76,10 +76,11 @@
         android:layout_height="56dp"
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
-        android:layout_marginBottom="48dp"
-        android:background="@android:color/transparent"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_botao_preto"
+        android:backgroundTint="@null"
         android:text="Criar conta"
-        android:textColor="#FFFFFF"
+        android:textColor="#0D47A1"
         android:textSize="16sp"
         android:textAllCaps="false"
         app:layout_constraintBottom_toBottomOf="parent"

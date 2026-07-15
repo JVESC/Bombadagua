@@ -13,10 +13,13 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.firebase.auth.FirebaseAuth;
+
 public class LoginActivity extends AppCompatActivity {
 
     private EditText etEmail;
     private EditText etSenha;
+    private FirebaseAuth firebaseAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,10 +33,15 @@ public class LoginActivity extends AppCompatActivity {
             return insets;
         });
 
+        firebaseAuth = FirebaseAuth.getInstance();
+
         etEmail = findViewById(R.id.etEmail);
         etSenha = findViewById(R.id.etSenha);
         Button btnEntrar = findViewById(R.id.btnEntrar);
         TextView tvIrParaCadastro = findViewById(R.id.tvIrParaCadastro);
+        android.widget.LinearLayout btnVoltar = findViewById(R.id.btnVoltarLogin);
+
+        btnVoltar.setOnClickListener(v -> finish());
 
         btnEntrar.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
@@ -44,11 +52,24 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
-            // TODO: integrar com Firebase Authentication (signInWithEmailAndPassword)
-            // Por enquanto, só avança para a tela principal do app.
-            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-            startActivity(intent);
-            finish();
+            btnEntrar.setEnabled(false);
+
+            firebaseAuth.signInWithEmailAndPassword(email, senha)
+                    .addOnCompleteListener(this, task -> {
+                        btnEntrar.setEnabled(true);
+
+                        if (task.isSuccessful()) {
+                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                            startActivity(intent);
+                            finish();
+                        } else {
+                            String mensagem = "Não foi possível entrar. Verifique e-mail e senha.";
+                            if (task.getException() != null && task.getException().getMessage() != null) {
+                                android.util.Log.e("LOGIN", task.getException().getMessage());
+                            }
+                            Toast.makeText(LoginActivity.this, mensagem, Toast.LENGTH_LONG).show();
+                        }
+                    });
         });
 
         tvIrParaCadastro.setOnClickListener(v -> {
