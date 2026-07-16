@@ -71,6 +71,8 @@
         android:inputType="textPersonName"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
+        android:textColorHint="#9E9E9E"
+        android:textColor="#000000"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvSubtitulo" />
@@ -85,6 +87,8 @@
         android:inputType="textEmailAddress"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
+        android:textColorHint="#9E9E9E"
+        android:textColor="#000000"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/etNome" />
@@ -99,6 +103,8 @@
         android:inputType="textVisiblePassword"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
+        android:textColorHint="#9E9E9E"
+        android:textColor="#000000"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/etEmail" />
@@ -113,6 +119,8 @@
         android:inputType="textVisiblePassword"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
+        android:textColorHint="#9E9E9E"
+        android:textColor="#000000"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/etSenha" />
