@@ -1,5 +1,6 @@
 package com.example.bombadagua;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
@@ -23,6 +24,7 @@ public class LoginActivity extends AppCompatActivity {
     private EditText etSenha;
     private FirebaseAuth firebaseAuth;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
