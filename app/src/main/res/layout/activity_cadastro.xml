@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="#FFFFFF"
     android:padding="40dp"
-    tools:context=".CadastroActivity">
+    tools:context=".activities.CadastroActivity">
 
     <!-- Botão voltar -->
     <LinearLayout
