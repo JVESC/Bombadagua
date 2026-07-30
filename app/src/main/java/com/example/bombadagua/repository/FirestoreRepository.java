@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class FirestoreRepository {
 
-    private static final long INTERVALO_GRAVACAO = 1000;
+    private static final long INTERVALO_GRAVACAO = 5000;
 
     private final FirebaseFirestore firestore;
 
@@ -47,7 +47,6 @@ public class FirestoreRepository {
 
         mapa.put("litrosMinuto",dados.getLitrosMinuto());
         mapa.put("litrosHoje",dados.getLitrosHoje());
-        mapa.put("aguaPoupada",dados.getAguaPoupada());
         mapa.put("vazamento",dados.isVazamento());
         mapa.put("online",dados.isOnline());
         mapa.put("ultimaAtualizacao",dados.getUltimaAtualizacao());

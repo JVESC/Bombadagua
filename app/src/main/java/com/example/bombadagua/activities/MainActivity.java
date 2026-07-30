@@ -1,5 +1,11 @@
 package com.example.bombadagua.activities;
 
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import android.view.Gravity;
+import android.widget.ImageView;
+import com.google.firebase.auth.FirebaseAuth;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
@@ -25,6 +31,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvAguaPoupada;
 
     private RepositorioFluxo repositorioFluxo;
+    private DrawerLayout drawerLayout;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,11 +58,20 @@ public class MainActivity extends AppCompatActivity {
 
         tvConsumoHoje = findViewById(R.id.tvConsumoHoje);
         tvVazaoAtual = findViewById(R.id.tvVazaoAtual);
-        tvAguaPoupada = findViewById(R.id.tvAguaPoupada);
+        drawerLayout = findViewById(R.id.drawerLayout);
+        ImageView btnMenu = findViewById(R.id.btnMenu);
+        Button btnSairConta = findViewById(R.id.btnSairConta);
 
-        debugarFirestore();
+        btnMenu.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
+        btnSairConta.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(MainActivity.this, BoasVindasActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
 
-        Button btnVerAlerta = findViewById(R.id.btnVerAlerta);
+            Button btnVerAlerta = findViewById(R.id.btnVerAlerta);
         Button btnVerHistorico = findViewById(R.id.btnVerHistorico);
 
         btnVerAlerta.setOnClickListener(v ->
@@ -84,9 +101,6 @@ public class MainActivity extends AppCompatActivity {
                         String.format("%.2f L",
                                 dados.getLitrosHoje()));
 
-                tvAguaPoupada.setText(
-                        String.format("%.2f L",
-                                dados.getAguaPoupada()));
 
             }
 

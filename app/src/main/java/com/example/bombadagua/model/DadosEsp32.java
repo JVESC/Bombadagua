@@ -39,13 +39,6 @@ public class DadosEsp32 {
         this.litrosHoje = litrosHoje;
     }
 
-    public double getAguaPoupada() {
-        return aguaPoupada;
-    }
-
-    public void setAguaPoupada(double aguaPoupada) {
-        this.aguaPoupada = aguaPoupada;
-    }
 
     public boolean isOnline() {
         return online;

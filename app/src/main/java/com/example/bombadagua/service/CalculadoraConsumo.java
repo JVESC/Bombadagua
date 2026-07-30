@@ -34,7 +34,6 @@ public class CalculadoraConsumo {
         consumoManager.salvarUltimaLeitura(agora);
 
         dados.setLitrosHoje(litrosHoje);
-        dados.setAguaPoupada(aguaPoupada);
         dados.setUltimaAtualizacao(agora);
 
         return dados;
