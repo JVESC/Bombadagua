@@ -107,6 +107,7 @@ public class CadastroActivity extends AppCompatActivity {
         tvIrParaLogin.setOnClickListener(v -> {
             Intent intent = new Intent(CadastroActivity.this, LoginActivity.class);
             startActivity(intent);
+            finish();
         });
     }
 }

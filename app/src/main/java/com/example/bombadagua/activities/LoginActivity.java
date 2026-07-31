@@ -114,6 +114,7 @@ public class LoginActivity extends AppCompatActivity {
         tvIrParaCadastro.setOnClickListener(v -> {
             Intent intent = new Intent(LoginActivity.this, CadastroActivity.class);
             startActivity(intent);
+            finish();
         });
     }
 }
