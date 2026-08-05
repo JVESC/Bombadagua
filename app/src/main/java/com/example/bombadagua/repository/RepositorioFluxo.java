@@ -56,6 +56,7 @@ public class RepositorioFluxo {
 
     public void iniciar(Listener listener) {
 
+        android.util.Log.d("TESTE", "Repositorio iniciou");
         fonteDados.iniciarLeituraContinua(new FonteDadosFluxo.Callback() {
 
             @Override

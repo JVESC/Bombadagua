@@ -36,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        android.util.Log.d("TESTE", "MainActivity criada");
         super.onCreate(savedInstanceState);
 
         EdgeToEdge.enable(this);
@@ -156,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
+        android.util.Log.d("TESTE", "onStart");
         iniciarMonitoramento();
     }
 

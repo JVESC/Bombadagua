@@ -40,6 +40,8 @@ public class WifiHelper implements FonteDadosFluxo {
 
     private void buscarDados(FonteDadosFluxo.Callback callback) {
 
+        android.util.Log.d("TESTE", "Entrou buscarDados");
+
         executor.execute(() -> {
 
             HttpURLConnection conexao = null;
@@ -47,14 +49,20 @@ public class WifiHelper implements FonteDadosFluxo {
             try {
 
                 String ip = ConfigManager.obterIp(context);
+                android.util.Log.d("TESTE", "IP: " + ip);
 
                 URL url = new URL("http://" + ip + "/dados");
+                android.util.Log.d("TESTE", "URL: " + url);
 
                 conexao = (HttpURLConnection) url.openConnection();
 
                 conexao.setRequestMethod("GET");
                 conexao.setConnectTimeout(5000);
                 conexao.setReadTimeout(5000);
+
+                // ADICIONE ESTA LINHA
+                int codigo = conexao.getResponseCode();
+                android.util.Log.d("TESTE", "HTTP: " + codigo);
 
                 BufferedReader leitor = new BufferedReader(
                         new InputStreamReader(conexao.getInputStream())
@@ -70,41 +78,38 @@ public class WifiHelper implements FonteDadosFluxo {
 
                 leitor.close();
 
+                android.util.Log.d("TESTE", "JSON: " + resposta);
+
                 JSONObject json = new JSONObject(resposta.toString());
 
                 DadosEsp32 dados = new DadosEsp32();
-                dados.setLitrosMinuto(
-                        json.getDouble("litros_minuto")
-                );
-
+                dados.setLitrosMinuto(json.getDouble("litros_minuto"));
                 dados.setOnline(true);
-
-                dados.setUltimaAtualizacao(
-                        System.currentTimeMillis()
-                );
-
+                dados.setUltimaAtualizacao(System.currentTimeMillis());
 
                 handler.post(() -> callback.onSucesso(dados));
 
             } catch (Exception e) {
 
-                handler.post(() -> callback.onErro(e.getMessage()));
+                android.util.Log.e("TESTE", "ERRO", e);
+                e.printStackTrace();
+
+                handler.post(() -> callback.onErro(e.toString()));
 
             } finally {
 
                 if (conexao != null) {
                     conexao.disconnect();
                 }
-
             }
-
         });
-
     }
 
 
     @Override
     public void iniciarLeituraContinua(FonteDadosFluxo.Callback callback) {
+
+        android.util.Log.d("TESTE", "WifiHelper iniciou");
 
         if (lendo) {
             return;
@@ -116,19 +121,21 @@ public class WifiHelper implements FonteDadosFluxo {
             @Override
             public void run() {
 
+                android.util.Log.d("TESTE", "Runnable executou");
+
                 if (!lendo) {
                     return;
                 }
 
+                android.util.Log.d("TESTE", "Chamando buscarDados");
+
                 buscarDados(callback);
 
                 leituraHandler.postDelayed(this, INTERVALO_LEITURA);
-
             }
         };
 
         leituraHandler.post(runnable);
-
     }
 @Override
     public void pararLeitura() {

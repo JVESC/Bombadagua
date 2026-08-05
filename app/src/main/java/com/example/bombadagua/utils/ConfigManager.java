@@ -9,7 +9,7 @@ public class ConfigManager {
 
     private static final String KEY_IP = "ip_esp32";
 
-    private static final String IP_PADRAO = "192.168.0.100";
+    private static final String IP_PADRAO = "172.30.193.61";
 
     public static void salvarIp(Context context, String ip){
 
