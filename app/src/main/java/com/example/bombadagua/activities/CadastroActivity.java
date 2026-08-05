@@ -17,6 +17,12 @@ import com.example.bombadagua.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.UserProfileChangeRequest;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FieldValue;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class CadastroActivity extends AppCompatActivity {
 
     private EditText etNome;
@@ -87,11 +93,46 @@ public class CadastroActivity extends AppCompatActivity {
 
                             firebaseAuth.getCurrentUser().updateProfile(perfil)
                                     .addOnCompleteListener(perfilTask -> {
-                                        btnCadastrar.setEnabled(true);
-                                        Toast.makeText(CadastroActivity.this, "Cadastro realizado com sucesso!", Toast.LENGTH_SHORT).show();
-                                        Intent intent = new Intent(CadastroActivity.this, LoginActivity.class);
-                                        startActivity(intent);
-                                        finish();
+                                        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+                                        Map<String, Object> usuario = new HashMap<>();
+
+                                        usuario.put("nome", nome);
+                                        usuario.put("email", email);
+                                        usuario.put("tokenFCM", "");
+                                        usuario.put("criadoEm", FieldValue.serverTimestamp());
+
+                                        db.collection("usuarios")
+                                                .document(firebaseAuth.getCurrentUser().getUid())
+                                                .set(usuario)
+                                                .addOnSuccessListener(unused -> {
+
+                                                    btnCadastrar.setEnabled(true);
+
+                                                    Toast.makeText(
+                                                            CadastroActivity.this,
+                                                            "Cadastro realizado com sucesso!",
+                                                            Toast.LENGTH_SHORT
+                                                    ).show();
+
+                                                    startActivity(new Intent(
+                                                            CadastroActivity.this,
+                                                            LoginActivity.class));
+
+                                                    finish();
+
+                                                })
+                                                .addOnFailureListener(e -> {
+
+                                                    btnCadastrar.setEnabled(true);
+
+                                                    Toast.makeText(
+                                                            CadastroActivity.this,
+                                                            "Erro ao salvar usuário.",
+                                                            Toast.LENGTH_LONG
+                                                    ).show();
+
+                                                });
                                     });
                         } else {
                             btnCadastrar.setEnabled(true);

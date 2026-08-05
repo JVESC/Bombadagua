@@ -18,6 +18,12 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.bombadagua.R;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -98,9 +104,40 @@ public class LoginActivity extends AppCompatActivity {
                         btnEntrar.setEnabled(true);
 
                         if (task.isSuccessful()) {
-                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                            startActivity(intent);
-                            finish();
+
+                            FirebaseUser usuario = firebaseAuth.getCurrentUser();
+
+                            if (usuario != null) {
+
+                                FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+                                db.collection("usuarios")
+                                        .document(usuario.getUid())
+                                        .get()
+                                        .addOnSuccessListener(document -> {
+
+                                            if (!document.exists()) {
+
+                                                Map<String, Object> dados = new HashMap<>();
+
+                                                dados.put("nome", usuario.getDisplayName());
+                                                dados.put("email", usuario.getEmail());
+                                                dados.put("tokenFCM", "");
+                                                dados.put("criadoEm", FieldValue.serverTimestamp());
+
+                                                db.collection("usuarios")
+                                                        .document(usuario.getUid())
+                                                        .set(dados);
+                                            }
+
+                                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                            startActivity(intent);
+                                            finish();
+
+                                        });
+
+                            }
+
                         } else {
                             String mensagem = "Não foi possível entrar. Verifique e-mail e senha.";
                             if (task.getException() != null && task.getException().getMessage() != null) {

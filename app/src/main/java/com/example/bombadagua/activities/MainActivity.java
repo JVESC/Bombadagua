@@ -23,6 +23,10 @@ import com.example.bombadagua.repository.RepositorioFluxo;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import android.util.Log;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -84,6 +88,33 @@ public class MainActivity extends AppCompatActivity {
 
         repositorioFluxo = new RepositorioFluxo(this);
 
+
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+
+                    if (!task.isSuccessful()) {
+                        Log.e("FCM", "Erro ao obter token", task.getException());
+                        return;
+                    }
+
+                    String token = task.getResult();
+
+                    Log.d("FCM", "Token: " + token);
+
+                    FirebaseUser usuario = FirebaseAuth.getInstance().getCurrentUser();
+
+                    if (usuario != null) {
+
+                        FirebaseFirestore.getInstance()
+                                .collection("usuarios")
+                                .document(usuario.getUid())
+                                .update("tokenFCM", token)
+                                .addOnSuccessListener(unused ->
+                                        Log.d("FCM", "Token salvo no Firestore"))
+                                .addOnFailureListener(e ->
+                                        Log.e("FCM", "Erro ao salvar token", e));
+                    }
+                });
 
     }
 

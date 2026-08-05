@@ -13,7 +13,7 @@
 
     <!-- Necessária em versões antigas para listar dispositivos pareados -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
-
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
         android:allowBackup="true"
@@ -46,6 +46,14 @@
         </activity>
         <activity android:name=".activities.LoginActivity" android:exported="false" />
         <activity android:name=".activities.CadastroActivity" android:exported="false" />
-    </application>
+        <service
+            android:name=".service.MeuFirebaseMessagingService"
+            android:exported="false">
 
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+
+        </service>
+    </application>
 </manifest>
