@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class FirestoreRepository {
 
-    private static final long INTERVALO_GRAVACAO = 5000;
+    private static final long INTERVALO_GRAVACAO = 15000;
 
     private final FirebaseFirestore firestore;
 

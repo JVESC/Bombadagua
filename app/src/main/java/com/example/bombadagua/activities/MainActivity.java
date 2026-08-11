@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
         drawerLayout = findViewById(R.id.drawerLayout);
         ImageView btnMenu = findViewById(R.id.btnMenu);
         Button btnSairConta = findViewById(R.id.btnSairConta);
+        Button btnConfigWifi = findViewById(R.id.btnConfigWifi);
 
         btnMenu.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
         btnSairConta.setOnClickListener(v -> {
@@ -75,6 +76,10 @@ public class MainActivity extends AppCompatActivity {
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             finish();
+        });
+        btnConfigWifi.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, ConfigWifiActivity.class);
+            startActivity(intent);
         });
 
             Button btnVerAlerta = findViewById(R.id.btnVerAlerta);

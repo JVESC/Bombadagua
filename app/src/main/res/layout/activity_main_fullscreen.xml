@@ -324,6 +324,19 @@
             android:layout_marginBottom="24dp"/>
 
         <Button
+            android:id="@+id/btnConfigWifi"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Configurar Wi-Fi da ESP32"
+            android:background="@drawable/bg_botao_borda"
+            app:backgroundTint="@null"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:textColor="#000000"
+            android:textAllCaps="false"
+            android:layout_marginBottom="12dp"/>
+
+        <Button
             android:id="@+id/btnSairConta"
             android:layout_width="match_parent"
             android:layout_height="52dp"

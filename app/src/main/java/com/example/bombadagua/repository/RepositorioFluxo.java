@@ -12,7 +12,7 @@ import com.example.bombadagua.service.DetectorVazamento;
 
 public class RepositorioFluxo {
 
-    private static final boolean MODO_SIMULACAO = false;
+    private static final boolean MODO_SIMULACAO = true;
 
     private final FonteDadosFluxo fonteDados;
 
