@@ -27,6 +27,7 @@ import android.util.Log;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.bombadagua.App;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -91,8 +92,7 @@ public class MainActivity extends AppCompatActivity {
         btnVerHistorico.setOnClickListener(v ->
                 startActivity(new Intent(this, HistoricoActivity.class)));
 
-        repositorioFluxo = new RepositorioFluxo(this);
-
+        repositorioFluxo = App.getRepositorioFluxo();
 
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(task -> {
@@ -198,13 +198,6 @@ public class MainActivity extends AppCompatActivity {
         iniciarMonitoramento();
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
 
-        if (repositorioFluxo != null) {
-            repositorioFluxo.parar();
-        }
-    }
 
 }
