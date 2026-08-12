@@ -1,6 +1,7 @@
 package com.example.bombadagua.repository;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.example.bombadagua.model.DadosEsp32;
 import com.example.bombadagua.network.FonteDadosFluxo;
@@ -19,31 +20,37 @@ public class RepositorioFluxo {
     private final CalculadoraConsumo calculadora;
 
     private final ConsumoManager consumoManager;
+
     private final DetectorVazamento detectorVazamento;
 
-    // Na próxima etapa vamos implementar de verdade
     private final FirestoreRepository firestoreRepository;
 
     public RepositorioFluxo(Context context) {
 
         if (MODO_SIMULACAO) {
 
-            fonteDados = new SimuladorFluxo();
+            fonteDados =
+                    new SimuladorFluxo();
 
         } else {
 
-            fonteDados = new WifiHelper(context);
-
+            fonteDados =
+                    new WifiHelper(context);
         }
 
-        calculadora = new CalculadoraConsumo();
+        calculadora =
+                new CalculadoraConsumo();
 
-        detectorVazamento = new DetectorVazamento();
+        detectorVazamento =
+                new DetectorVazamento();
 
-        consumoManager = new ConsumoManager(context);
+        consumoManager =
+                new ConsumoManager(context);
 
-        firestoreRepository = new FirestoreRepository(consumoManager);
-
+        firestoreRepository =
+                new FirestoreRepository(
+                        consumoManager
+                );
     }
 
     public interface Listener {
@@ -51,58 +58,190 @@ public class RepositorioFluxo {
         void onNovoFluxo(DadosEsp32 dados);
 
         void onErro(String erro);
-
     }
 
     public void iniciar(Listener listener) {
 
-        android.util.Log.d("TESTE", "Repositorio iniciou");
-        fonteDados.iniciarLeituraContinua(new FonteDadosFluxo.Callback() {
+        Log.d(
+                "TESTE",
+                "Repositorio iniciou"
+        );
 
-            @Override
-            public void onSucesso(DadosEsp32 dados) {
+        fonteDados.iniciarLeituraContinua(
+                new FonteDadosFluxo.Callback() {
 
-                android.util.Log.d("REPOSITORIO", "Recebeu dados da fonte");
+                    @Override
+                    public void onSucesso(
+                            DadosEsp32 dados
+                    ) {
 
-                DadosEsp32 dadosCalculados =
-                        calculadora.calcular(dados, consumoManager);
+                        Log.d(
+                                "REPOSITORIO",
+                                "Recebeu dados da fonte"
+                        );
 
-                android.util.Log.d("REPOSITORIO", "Calculou consumo");
+                        // =================================================
+                        // 1. DETECTA VAZAMENTO
+                        // =================================================
 
-                DadosEsp32 dadosAnalisados =
-                        detectorVazamento.analisar(dadosCalculados);
+                        DadosEsp32 dadosAnalisados =
+                                detectorVazamento.analisar(
+                                        dados
+                                );
 
-                android.util.Log.d("REPOSITORIO", "Analisou vazamento");
+                        Log.d(
+                                "REPOSITORIO",
+                                "Analisou vazamento"
+                        );
 
-                firestoreRepository.salvar(dadosAnalisados);
+                        // =================================================
+                        // 2. CALCULA CONSUMO E ÁGUA PERDIDA
+                        // =================================================
 
-                android.util.Log.d("REPOSITORIO", "Chamou FirestoreRepository");
+                        DadosEsp32 dadosCalculados =
+                                calculadora.calcular(
+                                        dadosAnalisados,
+                                        consumoManager
+                                );
 
-                listener.onNovoFluxo(dadosAnalisados);
+                        Log.d(
+                                "REPOSITORIO",
+                                "Calculou consumo"
+                        );
 
-            }
+                        // =================================================
+                        // 3. VERIFICA SE UM VAZAMENTO TERMINOU
+                        // =================================================
 
-            @Override
-            public void onErro(String erro) {
+                        if (
+                                detectorVazamento
+                                        .vazamentoFoiFinalizado()
+                        ) {
 
-                listener.onErro(erro);
+                            long inicio =
+                                    detectorVazamento
+                                            .getInicioVazamento();
 
-            }
+                            long fim =
+                                    System.currentTimeMillis();
 
-        });
+                            long duracao =
+                                    fim - inicio;
 
+                            double aguaPerdida =
+                                    calculadora
+                                            .getAguaPerdidaFinalizada();
+
+                            Log.d(
+                                    "REPOSITORIO",
+                                    "================================="
+                            );
+
+                            Log.d(
+                                    "REPOSITORIO",
+                                    "💧 VAZAMENTO FINALIZADO"
+                            );
+
+                            Log.d(
+                                    "REPOSITORIO",
+                                    "Início: "
+                                            + inicio
+                            );
+
+                            Log.d(
+                                    "REPOSITORIO",
+                                    "Fim: "
+                                            + fim
+                            );
+
+                            Log.d(
+                                    "REPOSITORIO",
+                                    "Duração: "
+                                            + duracao
+                                            + " ms"
+                            );
+
+                            Log.d(
+                                    "REPOSITORIO",
+                                    "Água perdida: "
+                                            + aguaPerdida
+                                            + " L"
+                            );
+
+                            Log.d(
+                                    "REPOSITORIO",
+                                    "Salvando histórico..."
+                            );
+
+                            Log.d(
+                                    "REPOSITORIO",
+                                    "================================="
+                            );
+
+                            firestoreRepository
+                                    .salvarVazamento(
+                                            inicio,
+                                            fim,
+                                            duracao,
+                                            aguaPerdida
+                                    );
+                        }
+
+                        // =================================================
+                        // 4. SALVA ESTADO ATUAL NO FIRESTORE
+                        // =================================================
+
+                        firestoreRepository.salvar(
+                                dadosCalculados
+                        );
+
+                        Log.d(
+                                "REPOSITORIO",
+                                "Chamou FirestoreRepository"
+                        );
+
+                        // =================================================
+                        // 5. ATUALIZA A TELA
+                        // =================================================
+
+                        listener.onNovoFluxo(
+                                dadosCalculados
+                        );
+                    }
+
+                    @Override
+                    public void onErro(
+                            String erro
+                    ) {
+
+                        listener.onErro(
+                                erro
+                        );
+                    }
+                }
+        );
     }
 
     public void parar() {
 
         fonteDados.pararLeitura();
-
     }
 
     public void finalizar() {
 
         fonteDados.finalizar();
-
     }
 
+    /**
+     * Marca o alerta atual como resolvido.
+     */
+    public void marcarVazamentoComoResolvido() {
+
+        detectorVazamento.marcarComoResolvido();
+
+        Log.d(
+                "REPOSITORIO",
+                "Vazamento marcado como resolvido."
+        );
+    }
 }

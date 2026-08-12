@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
@@ -22,7 +23,10 @@
             android:orientation="vertical"
             android:padding="20dp">
 
-            <!-- Botão voltar -->
+            <!-- ================================================= -->
+            <!-- VOLTAR -->
+            <!-- ================================================= -->
+
             <LinearLayout
                 android:id="@+id/btnVoltarHistorico"
                 android:layout_width="wrap_content"
@@ -47,7 +51,12 @@
                     android:text="Voltar"
                     android:textSize="16sp"
                     android:textColor="#000000"/>
+
             </LinearLayout>
+
+            <!-- ================================================= -->
+            <!-- TÍTULO -->
+            <!-- ================================================= -->
 
             <TextView
                 android:layout_width="wrap_content"
@@ -59,19 +68,95 @@
                 android:layout_marginBottom="4dp"/>
 
             <TextView
+                android:id="@+id/tvFiltroAtual"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Eventos resolvidos nos últimos 30 dias"
+                android:text="Últimos 7 dias"
                 android:textSize="14sp"
                 android:textColor="#666666"
-                android:layout_marginBottom="20dp"/>
+                android:layout_marginBottom="16dp"/>
 
-            <!-- Eventos resolvidos / Água poupada -->
+            <!-- ================================================= -->
+            <!-- FILTROS -->
+            <!-- ================================================= -->
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:layout_marginBottom="20dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/btnFiltroHoje"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Hoje"
+                        android:textSize="14sp"
+                        android:textColor="#FFFFFF"
+                        android:background="@drawable/bg_botao_preto"
+                        android:padding="12dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:layout_marginEnd="8dp"/>
+
+                    <TextView
+                        android:id="@+id/btnFiltroSeteDias"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="7 dias"
+                        android:textSize="14sp"
+                        android:textColor="#FFFFFF"
+                        android:background="@drawable/bg_botao_preto"
+                        android:padding="12dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:layout_marginEnd="8dp"/>
+
+                    <TextView
+                        android:id="@+id/btnFiltroTrintaDias"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="30 dias"
+                        android:textSize="14sp"
+                        android:textColor="#FFFFFF"
+                        android:background="@drawable/bg_botao_preto"
+                        android:padding="12dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:layout_marginEnd="8dp"/>
+
+                    <TextView
+                        android:id="@+id/btnFiltroTodos"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Todos"
+                        android:textSize="14sp"
+                        android:textColor="#FFFFFF"
+                        android:background="@drawable/bg_botao_preto"
+                        android:padding="12dp"
+                        android:clickable="true"
+                        android:focusable="true"/>
+
+                </LinearLayout>
+
+            </HorizontalScrollView>
+
+            <!-- ================================================= -->
+            <!-- RESUMO -->
+            <!-- ================================================= -->
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginBottom="20dp">
+
+                <!-- Eventos -->
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -93,11 +178,14 @@
                         android:id="@+id/tvEventosResolvidos"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="3"
+                        android:text="0"
                         android:textSize="22sp"
                         android:textColor="#000000"
                         android:textStyle="bold"/>
+
                 </LinearLayout>
+
+                <!-- Água -->
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -110,7 +198,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Água poupada"
+                        android:text="Água perdida"
                         android:textColor="#555555"
                         android:textSize="13sp"/>
 
@@ -118,137 +206,27 @@
                         android:id="@+id/tvAguaPoupadaHistorico"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="142 L"
+                        android:text="0 L"
                         android:textSize="22sp"
                         android:textColor="#2E7D32"
                         android:textStyle="bold"/>
-                </LinearLayout>
-            </LinearLayout>
 
-            <!-- Lista de eventos -->
-            <LinearLayout
-                android:id="@+id/itemHistorico1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_card_cinza"
-                android:padding="14dp"
-                android:layout_marginBottom="12dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_height="wrap_content"
-                        android:text="💧  Torneira jardim"
-                        android:textColor="#000000"
-                        android:textStyle="bold"
-                        android:textSize="15sp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="hoje"
-                        android:textColor="#888888"
-                        android:textSize="13sp"/>
                 </LinearLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Duração 3h 40min                  64 L perdidos"
-                    android:textColor="#555555"
-                    android:textSize="13sp"
-                    android:layout_marginTop="4dp"/>
             </LinearLayout>
+
+            <!-- ================================================= -->
+            <!-- LISTA DINÂMICA DE VAZAMENTOS -->
+            <!-- ================================================= -->
 
             <LinearLayout
-                android:id="@+id/itemHistorico2"
+                android:id="@+id/listaVazamentos"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_card_cinza"
-                android:padding="14dp"
-                android:layout_marginBottom="12dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_height="wrap_content"
-                        android:text="🍷  Cozinha"
-                        android:textColor="#000000"
-                        android:textStyle="bold"
-                        android:textSize="15sp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="12 jun"
-                        android:textColor="#888888"
-                        android:textSize="13sp"/>
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Duração 1h 05min                  31 L perdidos"
-                    android:textColor="#555555"
-                    android:textSize="13sp"
-                    android:layout_marginTop="4dp"/>
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/itemHistorico3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_card_cinza"
-                android:padding="14dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_height="wrap_content"
-                        android:text="🚿  Chuveiro"
-                        android:textColor="#000000"
-                        android:textStyle="bold"
-                        android:textSize="15sp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="3 jun"
-                        android:textColor="#888888"
-                        android:textSize="13sp"/>
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Duração 2h 50min                  47 L perdidos"
-                    android:textColor="#555555"
-                    android:textSize="13sp"
-                    android:layout_marginTop="4dp"/>
-            </LinearLayout>
+                android:orientation="vertical"/>
 
         </LinearLayout>
+
     </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

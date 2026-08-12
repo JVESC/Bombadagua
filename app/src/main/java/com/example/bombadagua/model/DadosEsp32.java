@@ -13,14 +13,22 @@ public class DadosEsp32 {
     private boolean vazamento;
 
     private long ultimaAtualizacao;
+    private double aguaPerdida;
+
+    // Momento em que começou a vazão contínua
+    private long inicioVazamento;
 
     public DadosEsp32() {
     }
 
     public DadosEsp32(double litrosMinuto) {
+
         this.litrosMinuto = litrosMinuto;
+
         this.online = true;
-        this.ultimaAtualizacao = System.currentTimeMillis();
+
+        this.ultimaAtualizacao =
+                System.currentTimeMillis();
     }
 
     public double getLitrosMinuto() {
@@ -39,6 +47,13 @@ public class DadosEsp32 {
         this.litrosHoje = litrosHoje;
     }
 
+    public double getAguaPoupada() {
+        return aguaPoupada;
+    }
+
+    public void setAguaPoupada(double aguaPoupada) {
+        this.aguaPoupada = aguaPoupada;
+    }
 
     public boolean isOnline() {
         return online;
@@ -64,4 +79,18 @@ public class DadosEsp32 {
         this.ultimaAtualizacao = ultimaAtualizacao;
     }
 
+    public long getInicioVazamento() {
+        return inicioVazamento;
+    }
+
+    public void setInicioVazamento(long inicioVazamento) {
+        this.inicioVazamento = inicioVazamento;
+    }
+    public double getAguaPerdida() {
+        return aguaPerdida;
+    }
+
+    public void setAguaPerdida(double aguaPerdida) {
+        this.aguaPerdida = aguaPerdida;
+    }
 }
