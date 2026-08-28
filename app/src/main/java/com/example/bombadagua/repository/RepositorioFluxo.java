@@ -4,16 +4,24 @@ import android.content.Context;
 import android.util.Log;
 
 import com.example.bombadagua.model.DadosEsp32;
+import com.example.bombadagua.network.FirebaseFluxo;
 import com.example.bombadagua.network.FonteDadosFluxo;
 import com.example.bombadagua.network.SimuladorFluxo;
-import com.example.bombadagua.network.WifiHelper;
 import com.example.bombadagua.service.CalculadoraConsumo;
 import com.example.bombadagua.service.ConsumoManager;
 import com.example.bombadagua.service.DetectorVazamento;
 
 public class RepositorioFluxo {
 
-    private static final boolean MODO_SIMULACAO = true;
+    // =============================================================
+    // CONFIGURAÇÃO
+    // =============================================================
+
+    private static final boolean MODO_SIMULACAO = false;
+
+    // =============================================================
+    // COMPONENTES
+    // =============================================================
 
     private final FonteDadosFluxo fonteDados;
 
@@ -25,17 +33,39 @@ public class RepositorioFluxo {
 
     private final FirestoreRepository firestoreRepository;
 
-    public RepositorioFluxo(Context context) {
+    // =============================================================
+    // CONTROLE
+    // =============================================================
+
+    private boolean iniciado = false;
+
+    // =============================================================
+    // CONSTRUTOR
+    // =============================================================
+
+    public RepositorioFluxo(
+            Context context
+    ) {
 
         if (MODO_SIMULACAO) {
 
             fonteDados =
                     new SimuladorFluxo();
 
+            Log.d(
+                    "REPOSITORIO",
+                    "Modo SIMULAÇÃO ativado."
+            );
+
         } else {
 
             fonteDados =
-                    new WifiHelper(context);
+                    new FirebaseFluxo();
+
+            Log.d(
+                    "REPOSITORIO",
+                    "Modo FIREBASE ativado."
+            );
         }
 
         calculadora =
@@ -48,23 +78,68 @@ public class RepositorioFluxo {
                 new ConsumoManager(context);
 
         firestoreRepository =
-                new FirestoreRepository(
-                        consumoManager
-                );
+                new FirestoreRepository();
     }
+
+    // =============================================================
+    // LISTENER
+    // =============================================================
 
     public interface Listener {
 
-        void onNovoFluxo(DadosEsp32 dados);
+        void onNovoFluxo(
+                DadosEsp32 dados
+        );
 
-        void onErro(String erro);
+        void onErro(
+                String erro
+        );
     }
 
-    public void iniciar(Listener listener) {
+    // =============================================================
+    // INICIAR
+    // =============================================================
+
+    public void iniciar(
+            Listener listener
+    ) {
+
+        // Evita criar múltiplos listeners
+        if (iniciado) {
+
+            Log.d(
+                    "REPOSITORIO",
+                    "Monitoramento já está iniciado."
+            );
+
+            return;
+        }
+
+        iniciado = true;
 
         Log.d(
-                "TESTE",
-                "Repositorio iniciou"
+                "REPOSITORIO",
+                "================================="
+        );
+
+        Log.d(
+                "REPOSITORIO",
+                "Monitoramento iniciado."
+        );
+
+        Log.d(
+                "REPOSITORIO",
+                "Fonte: "
+                        + (
+                        MODO_SIMULACAO
+                                ? "SIMULADOR"
+                                : "FIREBASE"
+                )
+        );
+
+        Log.d(
+                "REPOSITORIO",
+                "================================="
         );
 
         fonteDados.iniciarLeituraContinua(
@@ -77,11 +152,24 @@ public class RepositorioFluxo {
 
                         Log.d(
                                 "REPOSITORIO",
-                                "Recebeu dados da fonte"
+                                "Dados recebidos da ESP32."
+                        );
+
+                        Log.d(
+                                "REPOSITORIO",
+                                "Vazão: "
+                                        + dados.getLitrosMinuto()
+                                        + " L/min"
+                        );
+
+                        Log.d(
+                                "REPOSITORIO",
+                                "Litros hoje: "
+                                        + dados.getLitrosHoje()
                         );
 
                         // =================================================
-                        // 1. DETECTA VAZAMENTO
+                        // 1. DETECTOR DE VAZAMENTO
                         // =================================================
 
                         DadosEsp32 dadosAnalisados =
@@ -91,11 +179,12 @@ public class RepositorioFluxo {
 
                         Log.d(
                                 "REPOSITORIO",
-                                "Analisou vazamento"
+                                "Vazamento: "
+                                        + dadosAnalisados.isVazamento()
                         );
 
                         // =================================================
-                        // 2. CALCULA CONSUMO E ÁGUA PERDIDA
+                        // 2. CÁLCULOS LOCAIS
                         // =================================================
 
                         DadosEsp32 dadosCalculados =
@@ -104,13 +193,8 @@ public class RepositorioFluxo {
                                         consumoManager
                                 );
 
-                        Log.d(
-                                "REPOSITORIO",
-                                "Calculou consumo"
-                        );
-
                         // =================================================
-                        // 3. VERIFICA SE UM VAZAMENTO TERMINOU
+                        // 3. VAZAMENTO FINALIZADO
                         // =================================================
 
                         if (
@@ -139,26 +223,7 @@ public class RepositorioFluxo {
 
                             Log.d(
                                     "REPOSITORIO",
-                                    "💧 VAZAMENTO FINALIZADO"
-                            );
-
-                            Log.d(
-                                    "REPOSITORIO",
-                                    "Início: "
-                                            + inicio
-                            );
-
-                            Log.d(
-                                    "REPOSITORIO",
-                                    "Fim: "
-                                            + fim
-                            );
-
-                            Log.d(
-                                    "REPOSITORIO",
-                                    "Duração: "
-                                            + duracao
-                                            + " ms"
+                                    "VAZAMENTO FINALIZADO"
                             );
 
                             Log.d(
@@ -168,15 +233,9 @@ public class RepositorioFluxo {
                                             + " L"
                             );
 
-                            Log.d(
-                                    "REPOSITORIO",
-                                    "Salvando histórico..."
-                            );
-
-                            Log.d(
-                                    "REPOSITORIO",
-                                    "================================="
-                            );
+                            // =================================================
+                            // SALVA SOMENTE O HISTÓRICO
+                            // =================================================
 
                             firestoreRepository
                                     .salvarVazamento(
@@ -185,23 +244,20 @@ public class RepositorioFluxo {
                                             duracao,
                                             aguaPerdida
                                     );
+
+                            Log.d(
+                                    "REPOSITORIO",
+                                    "Histórico salvo."
+                            );
+
+                            Log.d(
+                                    "REPOSITORIO",
+                                    "================================="
+                            );
                         }
 
                         // =================================================
-                        // 4. SALVA ESTADO ATUAL NO FIRESTORE
-                        // =================================================
-
-                        firestoreRepository.salvar(
-                                dadosCalculados
-                        );
-
-                        Log.d(
-                                "REPOSITORIO",
-                                "Chamou FirestoreRepository"
-                        );
-
-                        // =================================================
-                        // 5. ATUALIZA A TELA
+                        // 4. ATUALIZA A INTERFACE
                         // =================================================
 
                         listener.onNovoFluxo(
@@ -214,6 +270,11 @@ public class RepositorioFluxo {
                             String erro
                     ) {
 
+                        Log.e(
+                                "REPOSITORIO",
+                                "Erro: " + erro
+                        );
+
                         listener.onErro(
                                 erro
                         );
@@ -222,19 +283,42 @@ public class RepositorioFluxo {
         );
     }
 
+    // =============================================================
+    // PARAR
+    // =============================================================
+
     public void parar() {
+
+        Log.d(
+                "REPOSITORIO",
+                "Parando monitoramento."
+        );
+
+        iniciado = false;
 
         fonteDados.pararLeitura();
     }
 
+    // =============================================================
+    // FINALIZAR
+    // =============================================================
+
     public void finalizar() {
+
+        Log.d(
+                "REPOSITORIO",
+                "Finalizando repositorio."
+        );
+
+        iniciado = false;
 
         fonteDados.finalizar();
     }
 
-    /**
-     * Marca o alerta atual como resolvido.
-     */
+    // =============================================================
+    // MARCAR VAZAMENTO COMO RESOLVIDO
+    // =============================================================
+
     public void marcarVazamentoComoResolvido() {
 
         detectorVazamento.marcarComoResolvido();

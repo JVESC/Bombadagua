@@ -14,38 +14,39 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.bombadagua.App;
 import com.example.bombadagua.R;
-import com.example.bombadagua.service.AlertaVazamentoManager;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
+import com.example.bombadagua.model.DadosEsp32;
+import com.example.bombadagua.network.FirebaseFluxo;
+import com.example.bombadagua.network.FonteDadosFluxo;
 
 import java.util.Locale;
 
-public class VazamentoActivity extends AppCompatActivity {
+public class VazamentoActivity
+        extends AppCompatActivity {
 
     private TextView tvDuracaoVazamento;
     private TextView tvAguaPerdida;
     private TextView tvVazaoAtualDetalhe;
 
-    private FirebaseFirestore firestore;
-
-    private ListenerRegistration listenerEstado;
+    private FirebaseFluxo firebaseFluxo;
 
     private final Handler handler =
-            new Handler(Looper.getMainLooper());
+            new Handler(
+                    Looper.getMainLooper()
+            );
 
     private long inicioVazamento = 0;
 
     private double aguaPerdida = 0.0;
 
+    private double vazaoAtual = 0.0;
+
     private boolean vazamentoAtivo = false;
 
-    // Manager compartilhado com o DetectorVazamento
-    private AlertaVazamentoManager alertaManager;
-
-    // ============================================================
+    // =============================================================
     // ATUALIZAÇÃO DA TELA
-    // ============================================================
+    // =============================================================
 
     private final Runnable atualizadorTela =
             new Runnable() {
@@ -53,8 +54,10 @@ public class VazamentoActivity extends AppCompatActivity {
                 @Override
                 public void run() {
 
-                    if (vazamentoAtivo
-                            && inicioVazamento > 0) {
+                    if (
+                            vazamentoAtivo &&
+                                    inicioVazamento > 0
+                    ) {
 
                         atualizarDuracao();
 
@@ -68,12 +71,18 @@ public class VazamentoActivity extends AppCompatActivity {
                 }
             };
 
+    // =============================================================
+    // ON CREATE
+    // =============================================================
+
     @Override
     protected void onCreate(
             Bundle savedInstanceState
     ) {
 
-        super.onCreate(savedInstanceState);
+        super.onCreate(
+                savedInstanceState
+        );
 
         EdgeToEdge.enable(this);
 
@@ -101,12 +110,14 @@ public class VazamentoActivity extends AppCompatActivity {
                 }
         );
 
-        // ========================================================
+        // =========================================================
         // COMPONENTES
-        // ========================================================
+        // =========================================================
 
         LinearLayout btnVoltar =
-                findViewById(R.id.btnVoltar);
+                findViewById(
+                        R.id.btnVoltar
+                );
 
         Button btnVerComoConsertar =
                 findViewById(
@@ -133,341 +144,168 @@ public class VazamentoActivity extends AppCompatActivity {
                         R.id.tvVazaoAtualDetalhe
                 );
 
-        firestore =
-                FirebaseFirestore.getInstance();
-
-        alertaManager =
-                AlertaVazamentoManager
-                        .getInstance();
-
-        // ========================================================
+        // =========================================================
         // VOLTAR
-        // ========================================================
+        // =========================================================
 
         btnVoltar.setOnClickListener(
                 v -> finish()
         );
 
-        // ========================================================
-        // VER COMO CONSERTAR
-        // ========================================================
+        // =========================================================
+        // COMO CONSERTAR
+        // =========================================================
 
         btnVerComoConsertar.setOnClickListener(
+                v ->
+                        Toast.makeText(
+                                this,
+                                "Abrir instruções de conserto",
+                                Toast.LENGTH_SHORT
+                        ).show()
+        );
+
+        // =========================================================
+        // MARCAR RESOLVIDO
+        // =========================================================
+        //
+        // NÃO ESCREVEMOS NO FIRESTORE.
+        //
+        // O DetectorVazamento controla o estado local.
+        //
+        // =========================================================
+
+        btnMarcarResolvido.setOnClickListener(
                 v -> {
+
+                    App.getRepositorioFluxo()
+                            .marcarVazamentoComoResolvido();
 
                     Toast.makeText(
                             this,
-                            "Abrir instruções de conserto",
+                            "Vazamento marcado como resolvido!",
                             Toast.LENGTH_SHORT
                     ).show();
-
                 }
         );
 
-        // ========================================================
-        // MARCAR COMO RESOLVIDO
-        // ========================================================
+        // =========================================================
+        // INICIAR LEITURA
+        // =========================================================
 
-        btnMarcarResolvido.setOnClickListener(
-                v -> marcarComoResolvido()
-        );
-
-        // ========================================================
-        // FIRESTORE
-        // ========================================================
-
-        ouvirEstado();
+        iniciarLeitura();
     }
 
-    // ============================================================
-    // MARCAR COMO RESOLVIDO
-    // ============================================================
+    // =============================================================
+    // FIREBASE
+    // =============================================================
 
-    private void marcarComoResolvido() {
+    private void iniciarLeitura() {
 
-        android.util.Log.d(
-                "VAZAMENTO",
-                "Botão Marcar como Resolvido pressionado."
-        );
+        firebaseFluxo =
+                new FirebaseFluxo();
 
-        // ========================================================
-        // 1. AVISA O DETECTOR / MANAGER
-        // ========================================================
+        firebaseFluxo.iniciarLeituraContinua(
+                new FonteDadosFluxo.Callback() {
 
-        alertaManager.marcarComoResolvido();
+                    @Override
+                    public void onSucesso(
+                            DadosEsp32 dados
+                    ) {
 
-        // ========================================================
-        // 2. PARA A ATUALIZAÇÃO DA TELA
-        // ========================================================
-
-        pararAtualizacaoTela();
-
-        vazamentoAtivo = false;
-
-        inicioVazamento = 0;
-
-        aguaPerdida = 0.0;
-
-        // ========================================================
-        // 3. ATUALIZA O FIRESTORE
-        // ========================================================
-
-        firestore.collection("estado")
-                .document("principal")
-                .update(
-                        "vazamento",
-                        false,
-
-                        "inicioVazamento",
-                        0L,
-
-                        "aguaPerdida",
-                        0.0
-                )
-                .addOnSuccessListener(
-                        unused -> {
-
-                            android.util.Log.d(
-                                    "VAZAMENTO",
-                                    "Firestore atualizado: "
-                                            + "vazamento=false"
-                            );
-
-                            Toast.makeText(
-                                    this,
-                                    "Vazamento marcado como resolvido!",
-                                    Toast.LENGTH_SHORT
-                            ).show();
-
-                            // =================================================
-                            // REMOVE O LISTENER
-                            // =================================================
-
-                            if (listenerEstado != null) {
-
-                                listenerEstado.remove();
-
-                                listenerEstado = null;
-                            }
-
-                            // =================================================
-                            // FECHA A TELA
-                            // =================================================
-
-                            finish();
-                        }
-                )
-                .addOnFailureListener(
-                        e -> {
-
-                            android.util.Log.e(
-                                    "VAZAMENTO",
-                                    "Erro ao atualizar Firestore",
-                                    e
-                            );
-
-                            Toast.makeText(
-                                    this,
-                                    "Erro ao marcar como resolvido.",
-                                    Toast.LENGTH_SHORT
-                            ).show();
-
-                            // Caso dê erro, voltamos a considerar
-                            // o vazamento ativo na tela.
-
-                            vazamentoAtivo = true;
-
-                            if (inicioVazamento == 0) {
-
-                                inicioVazamento =
-                                        System.currentTimeMillis();
-                            }
-
-                            iniciarAtualizacaoTela();
-                        }
-                );
-    }
-
-    // ============================================================
-    // OUVIR FIRESTORE EM TEMPO REAL
-    // ============================================================
-
-    private void ouvirEstado() {
-
-        listenerEstado =
-                firestore.collection("estado")
-                        .document("principal")
-                        .addSnapshotListener(
-                                (document, error) -> {
-
-                                    if (error != null) {
-
-                                        android.util.Log.e(
-                                                "VAZAMENTO",
-                                                "Erro ao ouvir estado",
-                                                error
-                                        );
-
-                                        return;
-                                    }
-
-                                    if (document == null
-                                            || !document.exists()) {
-
-                                        return;
-                                    }
-
-                                    // =================================
-                                    // VAZÃO
-                                    // =================================
-
-                                    Double vazao =
-                                            document.getDouble(
-                                                    "litrosMinuto"
-                                            );
-
-                                    if (vazao != null) {
-
-                                        tvVazaoAtualDetalhe
-                                                .setText(
-                                                        String.format(
-                                                                Locale.getDefault(),
-                                                                "%.1f L/min",
-                                                                vazao
-                                                        )
-                                                );
-                                    }
-
-                                    // =================================
-                                    // VAZAMENTO
-                                    // =================================
-
-                                    Boolean vazamento =
-                                            document.getBoolean(
-                                                    "vazamento"
-                                            );
-
-                                    boolean novoEstado =
-                                            Boolean.TRUE.equals(
-                                                    vazamento
-                                            );
-
-                                    // =================================
-                                    // ÁGUA PERDIDA
-                                    // =================================
-
-                                    Double agua =
-                                            document.getDouble(
-                                                    "aguaPerdida"
-                                            );
-
-                                    if (agua != null) {
-
-                                        aguaPerdida =
-                                                agua;
-
-                                        tvAguaPerdida
-                                                .setText(
-                                                        String.format(
-                                                                Locale.getDefault(),
-                                                                "%.1f L",
-                                                                aguaPerdida
-                                                        )
-                                                );
-                                    }
-
-                                    // =================================
-                                    // INÍCIO DO VAZAMENTO
-                                    // =================================
-
-                                    Long inicio =
-                                            document.getLong(
-                                                    "inicioVazamento"
-                                            );
-
-                                    if (inicio != null
-                                            && inicio > 0) {
-
-                                        inicioVazamento =
-                                                inicio;
-                                    }
-
-                                    // =================================
-                                    // ESTADO DA TELA
-                                    // =================================
-
-                                    if (novoEstado) {
-
-                                        vazamentoAtivo =
-                                                true;
-
-                                        tvDuracaoVazamento
-                                                .setText(
-                                                        "Vazamento detectado"
-                                                );
-
-                                        iniciarAtualizacaoTela();
-
-                                    } else {
-
-                                        vazamentoAtivo =
-                                                false;
-
-                                        inicioVazamento =
-                                                0;
-
-                                        aguaPerdida =
-                                                0.0;
-
-                                        tvDuracaoVazamento
-                                                .setText(
-                                                        "Nenhum vazamento"
-                                                );
-
-                                        tvAguaPerdida
-                                                .setText(
-                                                        "0.0 L"
-                                                );
-
-                                        pararAtualizacaoTela();
-                                    }
-                                }
+                        atualizarDados(
+                                dados
                         );
-    }
+                    }
 
-    // ============================================================
-    // INICIA ATUALIZAÇÃO
-    // ============================================================
+                    @Override
+                    public void onErro(
+                            String erro
+                    ) {
 
-    private void iniciarAtualizacaoTela() {
+                        tvVazaoAtualDetalhe
+                                .setText("--");
 
-        handler.removeCallbacks(
-                atualizadorTela
-        );
+                        tvAguaPerdida
+                                .setText("--");
 
-        handler.post(
-                atualizadorTela
-        );
-    }
-
-    // ============================================================
-    // PARA ATUALIZAÇÃO
-    // ============================================================
-
-    private void pararAtualizacaoTela() {
-
-        handler.removeCallbacks(
-                atualizadorTela
+                        tvDuracaoVazamento
+                                .setText("--");
+                    }
+                }
         );
     }
 
-    // ============================================================
-    // ATUALIZA DURAÇÃO
-    // ============================================================
+    // =============================================================
+    // ATUALIZAR DADOS
+    // =============================================================
+
+    private void atualizarDados(
+            DadosEsp32 dados
+    ) {
+
+        vazaoAtual =
+                dados.getLitrosMinuto();
+
+        tvVazaoAtualDetalhe.setText(
+                String.format(
+                        Locale.getDefault(),
+                        "%.2f L/min",
+                        vazaoAtual
+                )
+        );
+
+        vazamentoAtivo =
+                dados.isVazamento();
+
+        inicioVazamento =
+                dados.getInicioVazamento();
+
+        aguaPerdida =
+                dados.getAguaPerdida();
+
+        if (vazamentoAtivo) {
+
+            atualizarDuracao();
+
+            atualizarAguaPerdida();
+
+            handler.removeCallbacks(
+                    atualizadorTela
+            );
+
+            handler.post(
+                    atualizadorTela
+            );
+
+        } else {
+
+            handler.removeCallbacks(
+                    atualizadorTela
+            );
+
+            tvDuracaoVazamento.setText(
+                    "0s"
+            );
+
+            tvAguaPerdida.setText(
+                    "0.0 L"
+            );
+        }
+    }
+
+    // =============================================================
+    // DURAÇÃO
+    // =============================================================
 
     private void atualizarDuracao() {
 
         if (inicioVazamento <= 0) {
+
+            tvDuracaoVazamento.setText(
+                    "0s"
+            );
+
             return;
         }
 
@@ -499,9 +337,20 @@ public class VazamentoActivity extends AppCompatActivity {
             texto =
                     String.format(
                             Locale.getDefault(),
-                            "%dh %02dmin",
+                            "%dh %02dm %02ds",
                             horas,
-                            minutos
+                            minutos,
+                            segundos
+                    );
+
+        } else if (minutos > 0) {
+
+            texto =
+                    String.format(
+                            Locale.getDefault(),
+                            "%dm %02ds",
+                            minutos,
+                            segundos
                     );
 
         } else {
@@ -509,8 +358,7 @@ public class VazamentoActivity extends AppCompatActivity {
             texto =
                     String.format(
                             Locale.getDefault(),
-                            "%dmin %02ds",
-                            minutos,
+                            "%ds",
                             segundos
                     );
         }
@@ -520,35 +368,37 @@ public class VazamentoActivity extends AppCompatActivity {
         );
     }
 
-    // ============================================================
+    // =============================================================
     // ÁGUA PERDIDA
-    // ============================================================
+    // =============================================================
 
     private void atualizarAguaPerdida() {
 
         tvAguaPerdida.setText(
                 String.format(
                         Locale.getDefault(),
-                        "%.1f L",
+                        "%.2f L",
                         aguaPerdida
                 )
         );
     }
 
-    // ============================================================
-    // CICLO DE VIDA
-    // ============================================================
+    // =============================================================
+    // ON DESTROY
+    // =============================================================
 
     @Override
     protected void onDestroy() {
 
-        pararAtualizacaoTela();
+        handler.removeCallbacksAndMessages(
+                null
+        );
 
-        if (listenerEstado != null) {
+        if (firebaseFluxo != null) {
 
-            listenerEstado.remove();
+            firebaseFluxo.finalizar();
 
-            listenerEstado = null;
+            firebaseFluxo = null;
         }
 
         super.onDestroy();

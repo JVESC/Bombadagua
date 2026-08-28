@@ -23,7 +23,7 @@ import com.example.bombadagua.repository.RepositorioFluxo;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import android.util.Log;
+import android.util.Log; 
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -187,6 +187,15 @@ public class MainActivity extends AppCompatActivity {
 
         if (repositorioFluxo != null) {
             repositorioFluxo.finalizar();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if (repositorioFluxo != null) {
+            repositorioFluxo.parar();
         }
     }
 
