@@ -38,6 +38,35 @@ public class MainActivity extends AppCompatActivity {
     private RepositorioFluxo repositorioFluxo;
     private DrawerLayout drawerLayout;
 
+    // Guardamos a referência para poder remover exatamente
+    // este mesmo listener depois (em onStop).
+    private final RepositorioFluxo.Listener listener =
+            new RepositorioFluxo.Listener() {
+
+                @Override
+                public void onNovoFluxo(DadosEsp32 dados) {
+
+                    tvVazaoAtual.setText(
+                            String.format("%.2f L/min",
+                                    dados.getLitrosMinuto()));
+
+                    tvConsumoHoje.setText(
+                            String.format("%.2f L",
+                                    dados.getLitrosHoje()));
+
+                    if (tvAguaPoupada != null) {
+                        tvAguaPoupada.setText(
+                                String.format("%.2f L",
+                                        dados.getAguaPoupada()));
+                    }
+                }
+
+                @Override
+                public void onErro(String erro) {
+                    tvVazaoAtual.setText("--");
+                }
+            };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +94,7 @@ public class MainActivity extends AppCompatActivity {
 
         tvConsumoHoje = findViewById(R.id.tvConsumoHoje);
         tvVazaoAtual = findViewById(R.id.tvVazaoAtual);
+        tvAguaPoupada = findViewById(R.id.tvAguaPoupada);
         drawerLayout = findViewById(R.id.drawerLayout);
         ImageView btnMenu = findViewById(R.id.btnMenu);
         Button btnSairConta = findViewById(R.id.btnSairConta);
@@ -83,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-            Button btnVerAlerta = findViewById(R.id.btnVerAlerta);
+        Button btnVerAlerta = findViewById(R.id.btnVerAlerta);
         Button btnVerHistorico = findViewById(R.id.btnVerHistorico);
 
         btnVerAlerta.setOnClickListener(v ->
@@ -123,38 +153,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void iniciarMonitoramento() {
-
-
-        repositorioFluxo.iniciar(new RepositorioFluxo.Listener() {
-
-            @Override
-            public void onNovoFluxo(DadosEsp32 dados) {
-
-                tvVazaoAtual.setText(
-                        String.format("%.2f L/min",
-                                dados.getLitrosMinuto()));
-
-                tvConsumoHoje.setText(
-                        String.format("%.2f L",
-                                dados.getLitrosHoje()));
-
-
-            }
-
-            @Override
-            public void onErro(String erro) {
-
-                tvVazaoAtual.setText("--");
-
-            }
-
-        });
-
-    }
-
-
-
     private void debugarFirestore() {
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -182,11 +180,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onStop() {
+        super.onStop();
 
+        // Deixa de ouvir os dados. Se a VazamentoActivity ainda
+        // estiver na tela, o monitoramento continua rodando pra ela.
         if (repositorioFluxo != null) {
-            repositorioFluxo.finalizar();
+            repositorioFluxo.removerListener(listener);
         }
     }
 
@@ -195,9 +195,10 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
 
         android.util.Log.d("TESTE", "onStart");
-        iniciarMonitoramento();
+
+        if (repositorioFluxo != null) {
+            repositorioFluxo.adicionarListener(listener);
+        }
     }
-
-
 
 }

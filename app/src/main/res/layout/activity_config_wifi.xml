@@ -106,68 +106,40 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Conecte o celular à rede da ESP32 para configurar o Wi-Fi."
+                    android:text="Conecte o celular à rede Wi-Fi da ESP32 (nome: AGUA_SOB_CONTROLE, senha: 12345678)."
                     android:textColor="#555555"
                     android:textSize="14sp"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Depois, informe o nome e a senha da rede que a ESP32 deverá utilizar."
+                    android:text="Depois, toque em &quot;Abrir configuração da ESP32&quot; para informar a rede Wi-Fi de casa direto na página da ESP32."
                     android:textColor="#555555"
                     android:textSize="13sp"
                     android:layout_marginTop="6dp"/>
 
             </LinearLayout>
 
-            <!-- Nome do Wi-Fi -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Nome do Wi-Fi"
-                android:textColor="#000000"
-                android:textStyle="bold"
-                android:textSize="14sp"
-                android:layout_marginBottom="6dp"/>
-
-            <EditText
-                android:id="@+id/etWifi"
+            <!-- Passo 1: conectar o celular na rede da ESP32 -->
+            <Button
+                android:id="@+id/btnAbrirWifiCelular"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:hint="Ex.: MinhaInternet"
-                android:inputType="text"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"
+                android:text="1. Conectar o celular na rede da ESP32"
                 android:background="@drawable/bg_botao_borda"
-                android:layout_marginBottom="20dp"/>
-
-            <!-- Senha do Wi-Fi -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Senha do Wi-Fi"
+                app:backgroundTint="@null"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
                 android:textColor="#000000"
-                android:textStyle="bold"
-                android:textSize="14sp"
-                android:layout_marginBottom="6dp"/>
+                android:textAllCaps="false"
+                android:layout_marginBottom="12dp"/>
 
-            <EditText
-                android:id="@+id/etSenha"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:hint="Senha"
-                android:inputType="textPassword"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"
-                android:background="@drawable/bg_botao_borda"
-                android:layout_marginBottom="28dp"/>
-
-            <!-- Botão salvar -->
+            <!-- Passo 2: abrir a página de configuração da ESP32 -->
             <Button
                 android:id="@+id/btnSalvarWifi"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:text="Salvar Wi-Fi"
+                android:text="2. Abrir configuração da ESP32"
                 android:background="@drawable/bg_botao_preto"
                 app:backgroundTint="@null"
                 android:insetTop="0dp"

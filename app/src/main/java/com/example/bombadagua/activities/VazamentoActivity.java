@@ -17,8 +17,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.bombadagua.App;
 import com.example.bombadagua.R;
 import com.example.bombadagua.model.DadosEsp32;
-import com.example.bombadagua.network.FirebaseFluxo;
-import com.example.bombadagua.network.FonteDadosFluxo;
+import com.example.bombadagua.repository.RepositorioFluxo;
 
 import java.util.Locale;
 
@@ -29,7 +28,34 @@ public class VazamentoActivity
     private TextView tvAguaPerdida;
     private TextView tvVazaoAtualDetalhe;
 
-    private FirebaseFluxo firebaseFluxo;
+    private RepositorioFluxo repositorioFluxo;
+
+    // =============================================================
+    // LISTENER
+    // =============================================================
+    //
+    // Recebe o MESMO dado, já processado pelo DetectorVazamento,
+    // que a MainActivity recebe. Antes, esta tela lia o valor
+    // "cru" direto do Firestore (o que a ESP mandou), o que podia
+    // divergir do que o app calculava internamente.
+    // =============================================================
+
+    private final RepositorioFluxo.Listener listener =
+            new RepositorioFluxo.Listener() {
+
+                @Override
+                public void onNovoFluxo(DadosEsp32 dados) {
+                    atualizarDados(dados);
+                }
+
+                @Override
+                public void onErro(String erro) {
+
+                    tvVazaoAtualDetalhe.setText("--");
+                    tvAguaPerdida.setText("--");
+                    tvDuracaoVazamento.setText("--");
+                }
+            };
 
     private final Handler handler =
             new Handler(
@@ -190,50 +216,19 @@ public class VazamentoActivity
         );
 
         // =========================================================
-        // INICIAR LEITURA
+        // INSCREVER NO REPOSITÓRIO COMPARTILHADO
+        // =========================================================
+        //
+        // Usamos o mesmo RepositorioFluxo que a MainActivity usa,
+        // em vez de abrir uma segunda conexão direta ao Firestore.
+        // Assim os dois lugares mostram sempre o mesmo resultado.
         // =========================================================
 
-        iniciarLeitura();
-    }
+        repositorioFluxo = App.getRepositorioFluxo();
 
-    // =============================================================
-    // FIREBASE
-    // =============================================================
-
-    private void iniciarLeitura() {
-
-        firebaseFluxo =
-                new FirebaseFluxo();
-
-        firebaseFluxo.iniciarLeituraContinua(
-                new FonteDadosFluxo.Callback() {
-
-                    @Override
-                    public void onSucesso(
-                            DadosEsp32 dados
-                    ) {
-
-                        atualizarDados(
-                                dados
-                        );
-                    }
-
-                    @Override
-                    public void onErro(
-                            String erro
-                    ) {
-
-                        tvVazaoAtualDetalhe
-                                .setText("--");
-
-                        tvAguaPerdida
-                                .setText("--");
-
-                        tvDuracaoVazamento
-                                .setText("--");
-                    }
-                }
-        );
+        if (repositorioFluxo != null) {
+            repositorioFluxo.adicionarListener(listener);
+        }
     }
 
     // =============================================================
@@ -394,11 +389,8 @@ public class VazamentoActivity
                 null
         );
 
-        if (firebaseFluxo != null) {
-
-            firebaseFluxo.finalizar();
-
-            firebaseFluxo = null;
+        if (repositorioFluxo != null) {
+            repositorioFluxo.removerListener(listener);
         }
 
         super.onDestroy();

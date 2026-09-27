@@ -2,20 +2,27 @@ package com.example.bombadagua.service;
 
 import com.example.bombadagua.model.DadosEsp32;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 public class CalculadoraConsumo {
 
     private static final double FATOR_ECONOMIA = 0.20;
 
-    // Água perdida acumulada no vazamento atual
+    private static final SimpleDateFormat FORMATO_DATA =
+            new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+
+    // Água perdida no vazamento atual
     private double aguaPerdida = 0.0;
 
     // Água perdida no último vazamento finalizado
     private double aguaPerdidaFinalizada = 0.0;
 
-    // Usado para calcular o intervalo entre as leituras
+    // Última leitura durante o vazamento
     private long ultimaLeituraVazamento = 0;
 
-    // Indica se já estamos acompanhando um vazamento
+    // Estado anterior do vazamento
     private boolean vazamentoAnterior = false;
 
     public DadosEsp32 calcular(
@@ -26,89 +33,142 @@ public class CalculadoraConsumo {
         long agora =
                 System.currentTimeMillis();
 
-        double litrosHoje =
-                consumoManager.getLitrosHoje();
+        // =========================================================
+        // LITROS HOJE
+        // =========================================================
+        //
+        // A ESP32 manda em "litrosHoje" um total ACUMULADO desde a
+        // última vez que ela foi ligada — não zera à meia-noite.
+        // Por isso calculamos aqui o "hoje de verdade": o valor
+        // bruto da ESP menos o valor que ela já tinha no começo
+        // do dia (baseline), guardado no celular.
+        // =========================================================
 
-        long ultimaLeitura =
-                consumoManager.getUltimaLeitura();
+        double litrosBrutoEsp =
+                dados.getLitrosHoje();
 
-        // ==========================================
-        // CÁLCULO DO CONSUMO NORMAL
-        // ==========================================
+        String hojeStr =
+                FORMATO_DATA.format(new Date());
 
-        if (ultimaLeitura != 0) {
+        String diaSalvo =
+                consumoManager.getData();
 
-            double segundos =
-                    (agora - ultimaLeitura) / 1000.0;
+        double baseline =
+                consumoManager.getBaseline();
 
-            double litrosConsumidos =
-                    (dados.getLitrosMinuto() / 60.0)
-                            * segundos;
+        if (!hojeStr.equals(diaSalvo)) {
 
-            litrosHoje += litrosConsumidos;
+            // =====================================================
+            // VIROU O DIA (ou é a primeira leitura de sempre)
+            //
+            // Tudo que a ESP já tinha acumulado até agora passa a
+            // ser "baseline": não conta como consumo de hoje.
+            // =====================================================
+
+            baseline = litrosBrutoEsp;
+
+            consumoManager.salvarData(hojeStr);
+            consumoManager.salvarBaseline(baseline);
+
+            LogHelper.log(
+                    "Novo dia detectado. Baseline: "
+                            + baseline
+                            + " L"
+            );
+
+        } else if (litrosBrutoEsp < baseline) {
+
+            // =====================================================
+            // A ESP32 REINICIOU NO MEIO DO DIA
+            //
+            // O contador dela voltou pra perto de zero, então o
+            // valor atual já é, sozinho, o consumo de hoje a
+            // partir daqui (perdemos só o que já tinha sido
+            // contado antes do reinício, que é inevitável sem a
+            // ESP guardar o "hoje" na própria memória dela).
+            // =====================================================
+
+            baseline = 0.0;
+
+            consumoManager.salvarBaseline(baseline);
+
+            LogHelper.log(
+                    "ESP32 reiniciou durante o dia. "
+                            + "Baseline zerada."
+            );
         }
 
-        // ==========================================
-        // CÁLCULO DA ÁGUA PERDIDA
-        // ==========================================
+        double litrosHoje =
+                litrosBrutoEsp - baseline;
+
+        if (litrosHoje < 0) {
+            litrosHoje = 0;
+        }
+
+        // =========================================================
+        // ÁGUA POUPADA
+        // =========================================================
+
+        double aguaPoupada =
+                litrosHoje * FATOR_ECONOMIA;
+
+        // =========================================================
+        // ÁGUA PERDIDA
+        // =========================================================
 
         if (dados.isVazamento()) {
 
-            // ==========================================
-            // PRIMEIRO MOMENTO DO VAZAMENTO
-            // ==========================================
+            // =====================================================
+            // INÍCIO DO VAZAMENTO
+            // =====================================================
 
             if (!vazamentoAnterior) {
 
                 aguaPerdida = 0.0;
 
-                ultimaLeituraVazamento = agora;
+                ultimaLeituraVazamento =
+                        agora;
 
-                android.util.Log.d(
-                        "AGUA_PERDIDA",
-                        "Iniciando contador de água perdida"
+                LogHelper.log(
+                        "Iniciando contador de água perdida."
                 );
 
             } else {
 
-                // ==========================================
-                // INTERVALO DESDE A ÚLTIMA LEITURA
-                // ==========================================
+                // =================================================
+                // INTERVALO
+                // =================================================
 
                 double segundos =
                         (agora - ultimaLeituraVazamento)
                                 / 1000.0;
 
-                // Litros perdidos neste intervalo
                 double litrosPerdidos =
                         (dados.getLitrosMinuto() / 60.0)
                                 * segundos;
 
                 aguaPerdida += litrosPerdidos;
 
-                ultimaLeituraVazamento = agora;
+                ultimaLeituraVazamento =
+                        agora;
             }
 
             vazamentoAnterior = true;
 
         } else {
 
-            // ==========================================
-            // VAZAMENTO ENCERRADO
-            // ==========================================
+            // =====================================================
+            // VAZAMENTO TERMINOU
+            // =====================================================
 
             if (vazamentoAnterior) {
 
-                /*
-                 * Guarda o valor final antes de zerar
-                 * o contador do vazamento atual.
-                 */
                 aguaPerdidaFinalizada =
                         aguaPerdida;
 
                 android.util.Log.d(
                         "AGUA_PERDIDA",
-                        "Vazamento encerrado. Total perdido: "
+                        "Vazamento encerrado. Total: "
                                 + aguaPerdidaFinalizada
                                 + " L"
                 );
@@ -118,37 +178,12 @@ public class CalculadoraConsumo {
 
             ultimaLeituraVazamento = 0;
 
-            /*
-             * Zera somente o contador do vazamento atual.
-             *
-             * O valor de aguaPerdidaFinalizada continua
-             * disponível para o RepositorioFluxo.
-             */
             aguaPerdida = 0.0;
         }
 
-        // ==========================================
-        // ÁGUA POUPADA
-        // ==========================================
-
-        double aguaPoupada =
-                litrosHoje * FATOR_ECONOMIA;
-
-        // ==========================================
-        // SALVA OS DADOS
-        // ==========================================
-
-        consumoManager.salvarLitrosHoje(
-                litrosHoje
-        );
-
-        consumoManager.salvarUltimaLeitura(
-                agora
-        );
-
-        // ==========================================
-        // COLOCA OS RESULTADOS NO OBJETO
-        // ==========================================
+        // =========================================================
+        // RESULTADOS
+        // =========================================================
 
         dados.setLitrosHoje(
                 litrosHoje
@@ -158,30 +193,34 @@ public class CalculadoraConsumo {
                 aguaPoupada
         );
 
-        dados.setUltimaAtualizacao(
-                agora
-        );
-
         dados.setAguaPerdida(
                 aguaPerdida
-        );
-
-        android.util.Log.d(
-                "AGUA_PERDIDA",
-                "Água perdida atual: "
-                        + aguaPerdida
-                        + " L"
         );
 
         return dados;
     }
 
-    /**
-     * Retorna a quantidade de água perdida
-     * no último vazamento finalizado.
-     */
+    // =============================================================
+    // ÚLTIMO VAZAMENTO FINALIZADO
+    // =============================================================
+
     public double getAguaPerdidaFinalizada() {
 
         return aguaPerdidaFinalizada;
+    }
+
+    // =============================================================
+    // PEQUENO HELPER DE LOG
+    // =============================================================
+
+    private static class LogHelper {
+
+        static void log(String mensagem) {
+
+            android.util.Log.d(
+                    "CALCULADORA",
+                    mensagem
+            );
+        }
     }
 }

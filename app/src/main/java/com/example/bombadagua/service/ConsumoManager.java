@@ -12,6 +12,11 @@ public class ConsumoManager {
     private static final String KEY_ULTIMA_GRAVACAO = "ultimaGravacao";
     private static final String KEY_DATA = "data";
 
+    // Valor acumulado que a ESP32 já tinha (campo "litrosHoje" dela,
+    // que na verdade é um total desde o último boot dela) no
+    // instante em que o dia começou, do ponto de vista do app.
+    private static final String KEY_BASELINE = "baselineLitros";
+
     private final SharedPreferences preferences;
 
     public ConsumoManager(Context context) {
@@ -132,6 +137,36 @@ public class ConsumoManager {
     }
 
     //==========================
+    // BASELINE (valor acumulado da ESP no início do dia)
+    //==========================
+
+    public double getBaseline() {
+
+        return Double.longBitsToDouble(
+
+                preferences.getLong(
+                        KEY_BASELINE,
+                        Double.doubleToLongBits(0)
+                )
+
+        );
+
+    }
+
+    public void salvarBaseline(double baseline) {
+
+        preferences.edit()
+
+                .putLong(
+                        KEY_BASELINE,
+                        Double.doubleToLongBits(baseline)
+                )
+
+                .apply();
+
+    }
+
+    //==========================
     // RESET
     //==========================
 
@@ -143,6 +178,7 @@ public class ConsumoManager {
                 .remove(KEY_ULTIMA_LEITURA)
                 .remove(KEY_ULTIMA_GRAVACAO)
                 .remove(KEY_DATA)
+                .remove(KEY_BASELINE)
 
                 .apply();
 
