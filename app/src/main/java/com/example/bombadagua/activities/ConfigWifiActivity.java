@@ -1,14 +1,17 @@
 package com.example.bombadagua.activities;
 
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.view.View;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.bombadagua.R;
@@ -39,6 +42,12 @@ public class ConfigWifiActivity extends AppCompatActivity {
 
     private static final String NOME_REDE_ESP = "AGUA_SOB_CONTROLE";
 
+    private View containerInstrucoes;
+    private View containerWebView;
+    private View containerErro;
+
+    private WebView webView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,11 +58,70 @@ public class ConfigWifiActivity extends AppCompatActivity {
         Button btnAbrirWifiCelular =
                 findViewById(R.id.btnAbrirWifiCelular);
 
-        Button btnSalvarWifi =
+        Button btnAbrirConfigEsp =
                 findViewById(R.id.btnSalvarWifi);
 
         Button btnCancelarWifi =
                 findViewById(R.id.btnCancelarWifi);
+
+        containerInstrucoes = findViewById(R.id.containerInstrucoes);
+        containerWebView = findViewById(R.id.containerWebView);
+        containerErro = findViewById(R.id.containerErro);
+
+        Button btnAbrirWifiErro = findViewById(R.id.btnAbrirWifiErro);
+        Button btnTentarNovamente = findViewById(R.id.btnTentarNovamente);
+        View btnVoltarErro = findViewById(R.id.btnVoltarErro);
+
+        LinearLayout btnVoltarWebView =
+                findViewById(R.id.btnVoltarWebView);
+
+        ProgressBar progressWebView =
+                findViewById(R.id.progressWebView);
+
+        webView = findViewById(R.id.webViewEsp);
+
+        // =========================================================
+        // CONFIGURAÇÃO DO WEBVIEW
+        // =========================================================
+        //
+        // setWebViewClient garante que os links/formulários da
+        // própria página da ESP32 continuem abrindo AQUI DENTRO,
+        // em vez de mandar pra um navegador externo.
+        // =========================================================
+
+        webView.getSettings().setJavaScriptEnabled(false);
+
+        webView.setWebViewClient(new WebViewClient() {
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                progressWebView.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onReceivedError(
+                    WebView view,
+                    int errorCode,
+                    String description,
+                    String failingUrl
+            ) {
+                super.onReceivedError(view, errorCode, description, failingUrl);
+
+                progressWebView.setVisibility(View.GONE);
+
+                mostrarTelaErro();
+            }
+        });
+
+        webView.setWebChromeClient(new android.webkit.WebChromeClient() {
+
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                super.onProgressChanged(view, newProgress);
+                progressWebView.setProgress(newProgress);
+            }
+        });
 
         // =========================================================
         // PASSO 1: ABRIR O WI-FI DO CELULAR
@@ -79,39 +147,124 @@ public class ConfigWifiActivity extends AppCompatActivity {
         });
 
         // =========================================================
-        // PASSO 2: ABRIR A PÁGINA DE CONFIGURAÇÃO DA ESP32
+        // PASSO 2: MOSTRAR A PÁGINA DE CONFIGURAÇÃO DA ESP32
         // =========================================================
         //
         // A própria ESP32 serve a página com o formulário de
         // SSID/senha (ver paginaConfiguracao()/salvarWiFi() no
-        // firmware). O app só precisa abrir esse endereço no
-        // navegador — quem recebe e salva o Wi-Fi é a ESP32.
+        // firmware). O app só carrega esse endereço dentro do
+        // WebView — quem recebe e salva o Wi-Fi é a ESP32.
         // =========================================================
 
-        btnSalvarWifi.setOnClickListener(v -> {
-
-            try {
-
-                Intent intent = new Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse(URL_CONFIGURACAO_ESP)
-                );
-
-                startActivity(intent);
-
-            } catch (ActivityNotFoundException e) {
-
-                Toast.makeText(
-                        this,
-                        "Não encontrei um navegador para abrir "
-                                + URL_CONFIGURACAO_ESP,
-                        Toast.LENGTH_LONG
-                ).show();
-            }
-        });
+        btnAbrirConfigEsp.setOnClickListener(v -> abrirTelaWebView());
 
         btnCancelarWifi.setOnClickListener(v -> finish());
 
         btnVoltar.setOnClickListener(v -> finish());
+
+        btnVoltarWebView.setOnClickListener(v -> fecharTelaWebView());
+
+        // =========================================================
+        // TELA DE ERRO
+        // =========================================================
+
+        btnAbrirWifiErro.setOnClickListener(v -> {
+
+            Toast.makeText(
+                    this,
+                    "Selecione a rede \"" + NOME_REDE_ESP + "\"",
+                    Toast.LENGTH_LONG
+            ).show();
+
+            startActivity(
+                    new Intent(Settings.ACTION_WIFI_SETTINGS)
+            );
+        });
+
+        btnTentarNovamente.setOnClickListener(v -> {
+
+            containerErro.setVisibility(View.GONE);
+            containerWebView.setVisibility(View.VISIBLE);
+
+            progressWebView.setVisibility(View.VISIBLE);
+            progressWebView.setProgress(0);
+
+            webView.loadUrl(URL_CONFIGURACAO_ESP);
+        });
+
+        btnVoltarErro.setOnClickListener(v -> {
+
+            containerErro.setVisibility(View.GONE);
+            containerInstrucoes.setVisibility(View.VISIBLE);
+        });
+
+        // =========================================================
+        // BOTÃO FÍSICO/GESTO DE VOLTAR
+        // =========================================================
+
+        getOnBackPressedDispatcher().addCallback(
+                this,
+                new OnBackPressedCallback(true) {
+
+                    @Override
+                    public void handleOnBackPressed() {
+
+                        if (containerErro.getVisibility() == View.VISIBLE) {
+
+                            containerErro.setVisibility(View.GONE);
+                            containerInstrucoes.setVisibility(View.VISIBLE);
+
+                        } else if (containerWebView.getVisibility() == View.VISIBLE) {
+
+                            if (webView.canGoBack()) {
+                                webView.goBack();
+                            } else {
+                                fecharTelaWebView();
+                            }
+
+                        } else {
+
+                            finish();
+                        }
+                    }
+                }
+        );
+    }
+
+    private void abrirTelaWebView() {
+
+        containerInstrucoes.setVisibility(View.GONE);
+        containerErro.setVisibility(View.GONE);
+        containerWebView.setVisibility(View.VISIBLE);
+
+        webView.loadUrl(URL_CONFIGURACAO_ESP);
+    }
+
+    private void fecharTelaWebView() {
+
+        containerWebView.setVisibility(View.GONE);
+        containerInstrucoes.setVisibility(View.VISIBLE);
+
+        // Limpa a página pra não deixar carregando em segundo
+        // plano nem manter estado da tentativa anterior.
+        webView.loadUrl("about:blank");
+    }
+
+    private void mostrarTelaErro() {
+
+        containerWebView.setVisibility(View.GONE);
+        containerErro.setVisibility(View.VISIBLE);
+
+        webView.loadUrl("about:blank");
+    }
+
+    @Override
+    protected void onDestroy() {
+
+        if (webView != null) {
+            webView.destroy();
+        }
+
+        super.onDestroy();
     }
 }

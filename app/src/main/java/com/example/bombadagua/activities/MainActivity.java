@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView tvConsumoHoje;
     private TextView tvVazaoAtual;
-    private TextView tvAguaPoupada;
+    private TextView tvStatusEsp;
 
     private RepositorioFluxo repositorioFluxo;
     private DrawerLayout drawerLayout;
@@ -54,16 +54,30 @@ public class MainActivity extends AppCompatActivity {
                             String.format("%.2f L",
                                     dados.getLitrosHoje()));
 
-                    if (tvAguaPoupada != null) {
-                        tvAguaPoupada.setText(
-                                String.format("%.2f L",
-                                        dados.getAguaPoupada()));
+                    if (tvStatusEsp != null) {
+
+                        if (dados.isOnline()) {
+
+                            tvStatusEsp.setText("🟢 Online");
+                            tvStatusEsp.setTextColor(0xFF2E7D32);
+
+                        } else {
+
+                            tvStatusEsp.setText("🔴 Offline — verifique a ESP32");
+                            tvStatusEsp.setTextColor(0xFFC62828);
+                        }
                     }
                 }
 
                 @Override
                 public void onErro(String erro) {
+
                     tvVazaoAtual.setText("--");
+
+                    if (tvStatusEsp != null) {
+                        tvStatusEsp.setText("🔴 Offline — verifique a ESP32");
+                        tvStatusEsp.setTextColor(0xFFC62828);
+                    }
                 }
             };
 
@@ -94,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
 
         tvConsumoHoje = findViewById(R.id.tvConsumoHoje);
         tvVazaoAtual = findViewById(R.id.tvVazaoAtual);
-        tvAguaPoupada = findViewById(R.id.tvAguaPoupada);
+        tvStatusEsp = findViewById(R.id.tvStatusEsp);
         drawerLayout = findViewById(R.id.drawerLayout);
         ImageView btnMenu = findViewById(R.id.btnMenu);
         Button btnSairConta = findViewById(R.id.btnSairConta);

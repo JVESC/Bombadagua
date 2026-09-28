@@ -22,6 +22,14 @@ public class RepositorioFluxo {
 
     private static final boolean MODO_SIMULACAO = false;
 
+    // A ESP32 envia dados pro Firestore a cada ~5 segundos
+    // (veja intervaloFirebase no firmware). Se não chegar nada
+    // novo por mais tempo que isso, consideramos que ela está
+    // offline — mesmo que o campo "online" do Firestore ainda
+    // diga true (a ESP não avisa quando perde conexão, ela
+    // simplesmente para de mandar dado).
+    private static final long LIMITE_OFFLINE_MS = 30_000;
+
     // =============================================================
     // COMPONENTES
     // =============================================================
@@ -229,6 +237,34 @@ public class RepositorioFluxo {
                                 "Litros hoje: "
                                         + dados.getLitrosHoje()
                         );
+
+                        // =================================================
+                        // 0. VERIFICA SE O DADO ESTÁ "FRESCO"
+                        // =================================================
+                        //
+                        // Importante pro uso fora de casa: sem isso, se a
+                        // ESP perder Wi-Fi, o app continuaria mostrando os
+                        // últimos números como se fossem em tempo real.
+                        // =================================================
+
+                        long diferencaAtualizacao =
+                                System.currentTimeMillis()
+                                        - dados.getUltimaAtualizacao();
+
+                        if (
+                                dados.getUltimaAtualizacao() > 0 &&
+                                        diferencaAtualizacao > LIMITE_OFFLINE_MS
+                        ) {
+
+                            dados.setOnline(false);
+
+                            Log.d(
+                                    "REPOSITORIO",
+                                    "ESP32 sem atualizar há "
+                                            + (diferencaAtualizacao / 1000)
+                                            + "s — marcando como offline."
+                            );
+                        }
 
                         // =================================================
                         // 1. DETECTOR DE VAZAMENTO
