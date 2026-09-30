@@ -115,9 +115,22 @@ public class CadastroActivity extends AppCompatActivity {
                                                             Toast.LENGTH_SHORT
                                                     ).show();
 
-                                                    startActivity(new Intent(
+                                                    // Já entra direto no app —
+                                                    // o Firebase Auth já
+                                                    // considera o usuário
+                                                    // logado depois do
+                                                    // createUserWithEmailAndPassword,
+                                                    // não precisa pedir
+                                                    // login de novo.
+                                                    Intent intent = new Intent(
                                                             CadastroActivity.this,
-                                                            LoginActivity.class));
+                                                            MainActivity.class);
+
+                                                    intent.setFlags(
+                                                            Intent.FLAG_ACTIVITY_NEW_TASK
+                                                                    | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+                                                    startActivity(intent);
 
                                                     finish();
 

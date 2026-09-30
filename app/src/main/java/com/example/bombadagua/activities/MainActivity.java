@@ -6,7 +6,12 @@ import android.view.Gravity;
 import android.widget.ImageView;
 import com.google.firebase.auth.FirebaseAuth;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
@@ -34,9 +39,16 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvConsumoHoje;
     private TextView tvVazaoAtual;
     private TextView tvStatusEsp;
+    private TextView tvStatusVazamento;
 
     private RepositorioFluxo repositorioFluxo;
     private DrawerLayout drawerLayout;
+
+    private Button btnConfigWifi;
+    private TextView tvDicaConfigWifi;
+
+    private ConnectivityManager connectivityManager;
+    private ConnectivityManager.NetworkCallback networkCallback;
 
     // Guardamos a referência para poder remover exatamente
     // este mesmo listener depois (em onStop).
@@ -67,6 +79,20 @@ public class MainActivity extends AppCompatActivity {
                             tvStatusEsp.setTextColor(0xFFC62828);
                         }
                     }
+
+                    if (tvStatusVazamento != null) {
+
+                        if (dados.isVazamento()) {
+
+                            tvStatusVazamento.setText("Detectado");
+                            tvStatusVazamento.setTextColor(0xFFC62828);
+
+                        } else {
+
+                            tvStatusVazamento.setText("Nenhum");
+                            tvStatusVazamento.setTextColor(0xFF2E7D32);
+                        }
+                    }
                 }
 
                 @Override
@@ -77,6 +103,11 @@ public class MainActivity extends AppCompatActivity {
                     if (tvStatusEsp != null) {
                         tvStatusEsp.setText("🔴 Offline — verifique a ESP32");
                         tvStatusEsp.setTextColor(0xFFC62828);
+                    }
+
+                    if (tvStatusVazamento != null) {
+                        tvStatusVazamento.setText("--");
+                        tvStatusVazamento.setTextColor(0xFF000000);
                     }
                 }
             };
@@ -109,10 +140,18 @@ public class MainActivity extends AppCompatActivity {
         tvConsumoHoje = findViewById(R.id.tvConsumoHoje);
         tvVazaoAtual = findViewById(R.id.tvVazaoAtual);
         tvStatusEsp = findViewById(R.id.tvStatusEsp);
+        tvStatusVazamento = findViewById(R.id.tvStatusVazamento);
         drawerLayout = findViewById(R.id.drawerLayout);
         ImageView btnMenu = findViewById(R.id.btnMenu);
         Button btnSairConta = findViewById(R.id.btnSairConta);
-        Button btnConfigWifi = findViewById(R.id.btnConfigWifi);
+        btnConfigWifi = findViewById(R.id.btnConfigWifi);
+        tvDicaConfigWifi = findViewById(R.id.tvDicaConfigWifi);
+
+        connectivityManager = (ConnectivityManager)
+                getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        // Estado inicial (antes de qualquer callback de rede chegar)
+        atualizarDisponibilidadeConfigWifi();
 
         btnMenu.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
         btnSairConta.setOnClickListener(v -> {
@@ -167,6 +206,52 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    // =============================================================
+    // DISPONIBILIDADE DO "CONFIGURAR WI-FI DA ESP32"
+    // =============================================================
+    //
+    // Só faz sentido abrir essa tela se o celular estiver em
+    // ALGUMA rede Wi-Fi — pode ser a rede própria da ESP32
+    // (AGUA_SOB_CONTROLE, em modo de configuração) ou a mesma
+    // rede de casa que ela já está usando. Não dá pra saber o
+    // nome da rede de casa de antemão, então a regra é simples:
+    // conectado em Wi-Fi = habilitado; sem Wi-Fi = desabilitado.
+    // =============================================================
+
+    private boolean estaConectadoWifi() {
+
+        if (connectivityManager == null) {
+            return false;
+        }
+
+        Network rede = connectivityManager.getActiveNetwork();
+
+        if (rede == null) {
+            return false;
+        }
+
+        NetworkCapabilities capacidades =
+                connectivityManager.getNetworkCapabilities(rede);
+
+        return capacidades != null
+                && capacidades.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
+    }
+
+    private void atualizarDisponibilidadeConfigWifi() {
+
+        boolean conectadoWifi = estaConectadoWifi();
+
+        if (btnConfigWifi != null) {
+            btnConfigWifi.setEnabled(conectadoWifi);
+            btnConfigWifi.setAlpha(conectadoWifi ? 1f : 0.4f);
+        }
+
+        if (tvDicaConfigWifi != null) {
+            tvDicaConfigWifi.setVisibility(
+                    conectadoWifi ? android.view.View.GONE : android.view.View.VISIBLE);
+        }
+    }
+
     private void debugarFirestore() {
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -202,6 +287,11 @@ public class MainActivity extends AppCompatActivity {
         if (repositorioFluxo != null) {
             repositorioFluxo.removerListener(listener);
         }
+
+        if (connectivityManager != null && networkCallback != null) {
+            connectivityManager.unregisterNetworkCallback(networkCallback);
+            networkCallback = null;
+        }
     }
 
     @Override
@@ -212,6 +302,51 @@ public class MainActivity extends AppCompatActivity {
 
         if (repositorioFluxo != null) {
             repositorioFluxo.adicionarListener(listener);
+        }
+
+        // =========================================================
+        // ACOMPANHA TROCA DE REDE EM TEMPO REAL
+        // =========================================================
+        //
+        // Se o usuário sair do app, trocar de rede Wi-Fi (ou ligar/
+        // desligar o Wi-Fi) e voltar, o botão "Configurar Wi-Fi da
+        // ESP32" reflete isso sozinho, sem precisar reabrir a tela.
+        // =========================================================
+
+        if (connectivityManager != null) {
+
+            networkCallback = new ConnectivityManager.NetworkCallback() {
+
+                @Override
+                public void onAvailable(Network network) {
+                    runOnUiThread(
+                            MainActivity.this::atualizarDisponibilidadeConfigWifi);
+                }
+
+                @Override
+                public void onLost(Network network) {
+                    runOnUiThread(
+                            MainActivity.this::atualizarDisponibilidadeConfigWifi);
+                }
+
+                @Override
+                public void onCapabilitiesChanged(
+                        Network network,
+                        NetworkCapabilities capacidades
+                ) {
+                    runOnUiThread(
+                            MainActivity.this::atualizarDisponibilidadeConfigWifi);
+                }
+            };
+
+            NetworkRequest pedido = new NetworkRequest.Builder().build();
+
+            connectivityManager.registerNetworkCallback(
+                    pedido,
+                    networkCallback
+            );
+
+            atualizarDisponibilidadeConfigWifi();
         }
     }
 

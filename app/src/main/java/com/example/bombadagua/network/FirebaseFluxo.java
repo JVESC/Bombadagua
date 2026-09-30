@@ -3,21 +3,40 @@ package com.example.bombadagua.network;
 import android.util.Log;
 
 import com.example.bombadagua.model.DadosEsp32;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class FirebaseFluxo implements FonteDadosFluxo {
 
     private static final String TAG = "FIREBASE_FLUXO";
 
-    private final FirebaseFirestore firestore;
+    // =============================================================
+    // URL DO REALTIME DATABASE
+    // =============================================================
+    //
+    // Pegue esse endereço em: Firebase Console → Realtime Database
+    // → (o link mostrado no topo da página, algo como
+    // "https://SEU-PROJETO-default-rtdb.firebaseio.com/").
+    //
+    // Tem que ser EXATAMENTE o mesmo endereço usado no firmware
+    // (DATABASE_URL, no .ino).
+    // =============================================================
 
-    private ListenerRegistration listenerRegistration;
+    private static final String DATABASE_URL =
+            "https://bombadagua-ac54e-default-rtdb.firebaseio.com/";
+
+    private final DatabaseReference referencia;
+
+    private ValueEventListener listener;
 
     public FirebaseFluxo() {
 
-        firestore = FirebaseFirestore.getInstance();
+        referencia =
+                FirebaseDatabase.getInstance(DATABASE_URL)
+                        .getReference("estado");
     }
 
     @Override
@@ -30,105 +49,104 @@ public class FirebaseFluxo implements FonteDadosFluxo {
 
         Log.d(
                 TAG,
-                "Iniciando leitura do Firebase..."
+                "Iniciando leitura do Realtime Database..."
         );
 
-        listenerRegistration =
-                firestore.collection("estado")
-                        .document("principal")
-                        .addSnapshotListener(
-                                (snapshot, error) -> {
+        listener = new ValueEventListener() {
 
-                                    // ==========================================
-                                    // ERRO
-                                    // ==========================================
+            @Override
+            public void onDataChange(
+                    DataSnapshot snapshot
+            ) {
 
-                                    if (error != null) {
+                // ==========================================
+                // NÓ NÃO EXISTE
+                // ==========================================
 
-                                        Log.e(
-                                                TAG,
-                                                "Erro ao ler Firebase",
-                                                error
-                                        );
+                if (!snapshot.exists()) {
 
-                                        callback.onErro(
-                                                error.getMessage()
-                                        );
+                    Log.d(
+                            TAG,
+                            "Nó \"estado\" ainda não existe."
+                    );
 
-                                        return;
-                                    }
+                    callback.onErro(
+                            "Dados da ESP32 ainda não encontrados."
+                    );
 
-                                    // ==========================================
-                                    // DOCUMENTO NÃO EXISTE
-                                    // ==========================================
+                    return;
+                }
 
-                                    if (snapshot == null ||
-                                            !snapshot.exists()) {
+                // ==========================================
+                // CONVERTER
+                // ==========================================
 
-                                        Log.d(
-                                                TAG,
-                                                "Documento estado/principal não existe."
-                                        );
+                try {
 
-                                        callback.onErro(
-                                                "Dados da ESP32 ainda não encontrados."
-                                        );
+                    DadosEsp32 dados =
+                            converterDados(snapshot);
 
-                                        return;
-                                    }
+                    Log.d(
+                            TAG,
+                            "Dados recebidos:"
+                    );
 
-                                    // ==========================================
-                                    // CONVERTER
-                                    // ==========================================
+                    Log.d(
+                            TAG,
+                            "Vazão: "
+                                    + dados.getLitrosMinuto()
+                                    + " L/min"
+                    );
 
-                                    try {
+                    Log.d(
+                            TAG,
+                            "Litros hoje: "
+                                    + dados.getLitrosHoje()
+                    );
 
-                                        DadosEsp32 dados =
-                                                converterDados(snapshot);
+                    callback.onSucesso(dados);
 
-                                        Log.d(
-                                                TAG,
-                                                "Dados recebidos:"
-                                        );
+                } catch (Exception e) {
 
-                                        Log.d(
-                                                TAG,
-                                                "Vazão: "
-                                                        + dados.getLitrosMinuto()
-                                                        + " L/min"
-                                        );
+                    Log.e(
+                            TAG,
+                            "Erro ao converter dados",
+                            e
+                    );
 
-                                        Log.d(
-                                                TAG,
-                                                "Litros hoje: "
-                                                        + dados.getLitrosHoje()
-                                        );
+                    callback.onErro(
+                            "Erro ao processar dados: "
+                                    + e.getMessage()
+                    );
+                }
+            }
 
-                                        callback.onSucesso(dados);
+            @Override
+            public void onCancelled(
+                    DatabaseError error
+            ) {
 
-                                    } catch (Exception e) {
+                Log.e(
+                        TAG,
+                        "Erro ao ler Realtime Database: "
+                                + error.getMessage()
+                );
 
-                                        Log.e(
-                                                TAG,
-                                                "Erro ao converter dados",
-                                                e
-                                        );
+                callback.onErro(
+                        error.getMessage()
+                );
+            }
+        };
 
-                                        callback.onErro(
-                                                "Erro ao processar dados: "
-                                                        + e.getMessage()
-                                        );
-                                    }
-                                }
-                        );
+        referencia.addValueEventListener(listener);
     }
 
     // =============================================================
-    // FIRESTORE → DADOS ESP32
+    // REALTIME DATABASE → DADOS ESP32
     // =============================================================
 
     private DadosEsp32 converterDados(
-            DocumentSnapshot snapshot
+            DataSnapshot snapshot
     ) {
 
         DadosEsp32 dados =
@@ -139,7 +157,8 @@ public class FirebaseFluxo implements FonteDadosFluxo {
         // ==========================================
 
         Double litrosMinuto =
-                snapshot.getDouble("litrosMinuto");
+                snapshot.child("litrosMinuto")
+                        .getValue(Double.class);
 
         if (litrosMinuto != null) {
 
@@ -153,7 +172,8 @@ public class FirebaseFluxo implements FonteDadosFluxo {
         // ==========================================
 
         Double litrosHoje =
-                snapshot.getDouble("litrosHoje");
+                snapshot.child("litrosHoje")
+                        .getValue(Double.class);
 
         if (litrosHoje != null) {
 
@@ -163,53 +183,12 @@ public class FirebaseFluxo implements FonteDadosFluxo {
         }
 
         // ==========================================
-        // ÁGUA POUPADA
-        // ==========================================
-
-        Double aguaPoupada =
-                snapshot.getDouble("aguaPoupada");
-
-        if (aguaPoupada != null) {
-
-            dados.setAguaPoupada(
-                    aguaPoupada
-            );
-        }
-
-        // ==========================================
-        // ÁGUA PERDIDA
-        // ==========================================
-
-        Double aguaPerdida =
-                snapshot.getDouble("aguaPerdida");
-
-        if (aguaPerdida != null) {
-
-            dados.setAguaPerdida(
-                    aguaPerdida
-            );
-        }
-
-        // ==========================================
-        // VAZAMENTO
-        // ==========================================
-
-        Boolean vazamento =
-                snapshot.getBoolean("vazamento");
-
-        if (vazamento != null) {
-
-            dados.setVazamento(
-                    vazamento
-            );
-        }
-
-        // ==========================================
         // ONLINE
         // ==========================================
 
         Boolean online =
-                snapshot.getBoolean("online");
+                snapshot.child("online")
+                        .getValue(Boolean.class);
 
         if (online != null) {
 
@@ -225,7 +204,8 @@ public class FirebaseFluxo implements FonteDadosFluxo {
         // ==========================================
 
         Long ultimaAtualizacao =
-                snapshot.getLong("ultimaAtualizacao");
+                snapshot.child("ultimaAtualizacao")
+                        .getValue(Long.class);
 
         if (ultimaAtualizacao != null) {
 
@@ -235,18 +215,16 @@ public class FirebaseFluxo implements FonteDadosFluxo {
         }
 
         // ==========================================
+        // VAZAMENTO / ÁGUA POUPADA / ÁGUA PERDIDA /
         // INÍCIO DO VAZAMENTO
         // ==========================================
-
-        Long inicioVazamento =
-                snapshot.getLong("inicioVazamento");
-
-        if (inicioVazamento != null) {
-
-            dados.setInicioVazamento(
-                    inicioVazamento
-            );
-        }
+        //
+        // A ESP32 não manda esses campos — eles são
+        // calculados no próprio app (DetectorVazamento
+        // e CalculadoraConsumo), então ficam com o valor
+        // padrão aqui e são preenchidos depois, no
+        // RepositorioFluxo.
+        // ==========================================
 
         return dados;
     }
@@ -258,15 +236,15 @@ public class FirebaseFluxo implements FonteDadosFluxo {
     @Override
     public void pararLeitura() {
 
-        if (listenerRegistration != null) {
+        if (listener != null) {
 
-            listenerRegistration.remove();
+            referencia.removeEventListener(listener);
 
-            listenerRegistration = null;
+            listener = null;
 
             Log.d(
                     TAG,
-                    "Listener Firebase removido."
+                    "Listener Realtime Database removido."
             );
         }
     }
