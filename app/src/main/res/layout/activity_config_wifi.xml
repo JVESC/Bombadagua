@@ -111,14 +111,14 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Conecte o celular à rede Wi-Fi da ESP32 (nome: AGUA_SOB_CONTROLE, senha: 12345678)."
+                    android:text="Se a ESP32 ainda não foi configurada, conecte o celular na rede dela (AGUA_SOB_CONTROLE, senha 12345678)."
                     android:textColor="#555555"
                     android:textSize="14sp"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Depois, toque em &quot;Abrir configuração da ESP32&quot; para informar a rede Wi-Fi de casa, direto aqui na tela."
+                    android:text="Se ela já foi configurada antes, conecte o celular na MESMA rede Wi-Fi de casa que ela já está usando. Depois, toque em &quot;Abrir configuração da ESP32&quot;."
                     android:textColor="#555555"
                     android:textSize="13sp"
                     android:layout_marginTop="6dp"/>
@@ -287,7 +287,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Conecte o celular na rede Wi-Fi AGUA_SOB_CONTROLE antes de configurar."
+            android:text="Conecte o celular na rede Wi-Fi AGUA_SOB_CONTROLE (se ela ainda não foi configurada) ou na mesma rede Wi-Fi de casa que ela já está usando (se já foi configurada antes)."
             android:textSize="14sp"
             android:textColor="#666666"
             android:gravity="center"

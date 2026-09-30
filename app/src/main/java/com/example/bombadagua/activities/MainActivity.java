@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvConsumoHoje;
     private TextView tvVazaoAtual;
     private TextView tvStatusEsp;
+    private TextView tvStatusVazamento;
 
     private RepositorioFluxo repositorioFluxo;
     private DrawerLayout drawerLayout;
@@ -67,6 +68,20 @@ public class MainActivity extends AppCompatActivity {
                             tvStatusEsp.setTextColor(0xFFC62828);
                         }
                     }
+
+                    if (tvStatusVazamento != null) {
+
+                        if (dados.isVazamento()) {
+
+                            tvStatusVazamento.setText("Detectado");
+                            tvStatusVazamento.setTextColor(0xFFC62828);
+
+                        } else {
+
+                            tvStatusVazamento.setText("Nenhum");
+                            tvStatusVazamento.setTextColor(0xFF2E7D32);
+                        }
+                    }
                 }
 
                 @Override
@@ -77,6 +92,11 @@ public class MainActivity extends AppCompatActivity {
                     if (tvStatusEsp != null) {
                         tvStatusEsp.setText("🔴 Offline — verifique a ESP32");
                         tvStatusEsp.setTextColor(0xFFC62828);
+                    }
+
+                    if (tvStatusVazamento != null) {
+                        tvStatusVazamento.setText("--");
+                        tvStatusVazamento.setTextColor(0xFF000000);
                     }
                 }
             };
@@ -109,6 +129,7 @@ public class MainActivity extends AppCompatActivity {
         tvConsumoHoje = findViewById(R.id.tvConsumoHoje);
         tvVazaoAtual = findViewById(R.id.tvVazaoAtual);
         tvStatusEsp = findViewById(R.id.tvStatusEsp);
+        tvStatusVazamento = findViewById(R.id.tvStatusVazamento);
         drawerLayout = findViewById(R.id.drawerLayout);
         ImageView btnMenu = findViewById(R.id.btnMenu);
         Button btnSairConta = findViewById(R.id.btnSairConta);

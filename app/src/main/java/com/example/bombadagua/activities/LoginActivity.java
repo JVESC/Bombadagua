@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.MotionEvent;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -29,6 +30,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private EditText etEmail;
     private EditText etSenha;
+    private View overlayCarregando;
     private FirebaseAuth firebaseAuth;
 
     @SuppressLint("ClickableViewAccessibility")
@@ -53,6 +55,7 @@ public class LoginActivity extends AppCompatActivity {
 
         etEmail = findViewById(R.id.etEmail);
         etSenha = findViewById(R.id.etSenha);
+        overlayCarregando = findViewById(R.id.overlayCarregando);
         Button btnEntrar = findViewById(R.id.btnEntrar);
         TextView tvIrParaCadastro = findViewById(R.id.tvIrParaCadastro);
         android.widget.LinearLayout btnVoltar = findViewById(R.id.btnVoltarLogin);
@@ -98,10 +101,15 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             btnEntrar.setEnabled(false);
+            etEmail.setEnabled(false);
+            etSenha.setEnabled(false);
+            overlayCarregando.setVisibility(View.VISIBLE);
 
             firebaseAuth.signInWithEmailAndPassword(email, senha)
                     .addOnCompleteListener(this, task -> {
                         btnEntrar.setEnabled(true);
+                        etEmail.setEnabled(true);
+                        etSenha.setEnabled(true);
 
                         if (task.isSuccessful()) {
 
@@ -130,15 +138,31 @@ public class LoginActivity extends AppCompatActivity {
                                                         .set(dados);
                                             }
 
+                                            // overlay some daqui a pouco, quando a
+                                            // MainActivity assumir a tela
                                             Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                                             startActivity(intent);
                                             finish();
 
+                                        })
+                                        .addOnFailureListener(e -> {
+
+                                            // Conseguiu logar, mas falhou ao ler
+                                            // o Firestore — entra mesmo assim.
+                                            overlayCarregando.setVisibility(View.GONE);
+
+                                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                            startActivity(intent);
+                                            finish();
                                         });
 
+                            } else {
+                                overlayCarregando.setVisibility(View.GONE);
                             }
 
                         } else {
+                            overlayCarregando.setVisibility(View.GONE);
+
                             String mensagem = "Não foi possível entrar. Verifique e-mail e senha.";
                             if (task.getException() != null && task.getException().getMessage() != null) {
                                 android.util.Log.e("LOGIN", task.getException().getMessage());

@@ -137,7 +137,7 @@ public class ConfigWifiActivity extends AppCompatActivity {
 
             Toast.makeText(
                     this,
-                    "Selecione a rede \"" + NOME_REDE_ESP + "\"",
+                    "Selecione a rede \"" + NOME_REDE_ESP + "\", ou a rede Wi-Fi de casa se a ESP32 já foi configurada",
                     Toast.LENGTH_LONG
             ).show();
 
@@ -172,7 +172,7 @@ public class ConfigWifiActivity extends AppCompatActivity {
 
             Toast.makeText(
                     this,
-                    "Selecione a rede \"" + NOME_REDE_ESP + "\"",
+                    "Selecione a rede \"" + NOME_REDE_ESP + "\", ou a rede Wi-Fi de casa se a ESP32 já foi configurada",
                     Toast.LENGTH_LONG
             ).show();
 
