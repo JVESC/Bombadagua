@@ -1,20 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Adicionar essas linhas ANTES da tag <application>, dentro de <manifest> -->
 
-    <!-- Permissões clássicas (funcionam em qualquer versão do Android) -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- INTERNET / REDE -->
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
 
-    <!-- Permissões novas (obrigatórias a partir do Android 12 / API 31) -->
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
 
-    <!-- Necessária em versões antigas para listar dispositivos pareados -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- BLUETOOTH -->
+
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN" />
+
+
+    <!-- LOCALIZAÇÃO PARA ANDROID ANTIGO -->
+
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="30" />
+
+
+    <!-- NOTIFICAÇÕES -->
+
+    <uses-permission
+        android:name="android.permission.POST_NOTIFICATIONS" />
+
 
     <application
         android:name=".App"
@@ -27,37 +49,93 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Bombadagua"
         android:usesCleartextTraffic="true">
+
+
+        <!-- TELA PRINCIPAL -->
+
         <activity
             android:name=".activities.MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
         </activity>
 
+
+        <!-- VINCULAR ESP32 -->
+
+        <activity
+            android:name=".activities.VincularEsp32Activity"
+            android:exported="false" />
+
+
+        <!-- VAZAMENTO -->
+
         <activity
             android:name=".activities.VazamentoActivity"
             android:exported="false" />
 
+
+        <!-- HISTÓRICO -->
+
         <activity
             android:name=".activities.HistoricoActivity"
             android:exported="false" />
-        <activity android:name=".activities.BoasVindasActivity" android:exported="true">
+
+
+        <!-- BOAS-VINDAS -->
+
+        <activity
+            android:name=".activities.BoasVindasActivity"
+            android:exported="true">
+
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+
+                <action
+                    android:name="android.intent.action.MAIN" />
+
+                <category
+                    android:name="android.intent.category.LAUNCHER" />
+
             </intent-filter>
+
         </activity>
-        <activity android:name=".activities.LoginActivity" android:exported="false" />
-        <activity android:name=".activities.CadastroActivity" android:exported="false" />
+
+
+        <!-- LOGIN -->
+
+        <activity
+            android:name=".activities.LoginActivity"
+            android:exported="false" />
+
+
+        <!-- CADASTRO -->
+
+        <activity
+            android:name=".activities.CadastroActivity"
+            android:exported="false" />
+
+
+        <!-- CONFIGURAÇÃO WI-FI -->
+
         <activity
             android:name=".activities.ConfigWifiActivity"
             android:exported="false" />
+
+
+        <!-- FIREBASE CLOUD MESSAGING -->
+
         <service
             android:name=".service.MeuFirebaseMessagingService"
             android:exported="false">
 
             <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+
+                <action
+                    android:name="com.google.firebase.MESSAGING_EVENT" />
+
             </intent-filter>
+
         </service>
+
     </application>
+
 </manifest>

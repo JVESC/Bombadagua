@@ -13,39 +13,108 @@ public class FirebaseFluxo implements FonteDadosFluxo {
 
     private static final String TAG = "FIREBASE_FLUXO";
 
-    // =============================================================
-    // URL DO REALTIME DATABASE
-    // =============================================================
-    //
-    // Pegue esse endereço em: Firebase Console → Realtime Database
-    // → (o link mostrado no topo da página, algo como
-    // "https://SEU-PROJETO-default-rtdb.firebaseio.com/").
-    //
-    // Tem que ser EXATAMENTE o mesmo endereço usado no firmware
-    // (DATABASE_URL, no .ino).
-    // =============================================================
-
     private static final String DATABASE_URL =
             "https://bombadagua-ac54e-default-rtdb.firebaseio.com/";
 
-    private final DatabaseReference referencia;
+    private DatabaseReference referencia;
 
     private ValueEventListener listener;
 
+    private String dispositivoId;
+
     public FirebaseFluxo() {
 
-        referencia =
-                FirebaseDatabase.getInstance(DATABASE_URL)
-                        .getReference("estado");
+        /*
+         * Não iniciamos a referência aqui porque ainda não
+         * sabemos qual ESP32 o usuário escolheu.
+         */
+        referencia = null;
     }
+
+    // =============================================================
+    // DEFINIR ESP32
+    // =============================================================
+
+    public void selecionarDispositivo(
+            String dispositivoId
+    ) {
+
+        pararLeitura();
+
+        this.dispositivoId = dispositivoId;
+
+        if (
+                dispositivoId == null
+                        ||
+                        dispositivoId.trim().isEmpty()
+        ) {
+
+            referencia = null;
+
+            Log.e(
+                    TAG,
+                    "ID do dispositivo inválido."
+            );
+
+            return;
+        }
+
+        referencia =
+                FirebaseDatabase
+                        .getInstance(DATABASE_URL)
+                        .getReference("dispositivos")
+                        .child(dispositivoId)
+                        .child("estado");
+
+        Log.d(
+                TAG,
+                "ESP32 selecionada: "
+                        + dispositivoId
+        );
+
+        Log.d(
+                TAG,
+                "Caminho do Firebase: "
+                        + "dispositivos/"
+                        + dispositivoId
+                        + "/estado"
+        );
+    }
+
+    // =============================================================
+    // OBTER DISPOSITIVO ATUAL
+    // =============================================================
+
+    public String getDispositivoId() {
+
+        return dispositivoId;
+    }
+
+    // =============================================================
+    // INICIAR LEITURA
+    // =============================================================
 
     @Override
     public void iniciarLeituraContinua(
             Callback callback
     ) {
 
-        // Evita criar dois listeners ao mesmo tempo
         pararLeitura();
+
+        if (referencia == null) {
+
+            Log.e(
+                    TAG,
+                    "Não é possível iniciar leitura: "
+                            + "nenhuma ESP32 foi selecionada."
+            );
+
+            callback.onErro(
+                    "Nenhuma ESP32 selecionada."
+            );
+
+            return;
+        }
 
         Log.d(
                 TAG,
@@ -59,15 +128,15 @@ public class FirebaseFluxo implements FonteDadosFluxo {
                     DataSnapshot snapshot
             ) {
 
-                // ==========================================
+                // =================================================
                 // NÓ NÃO EXISTE
-                // ==========================================
+                // =================================================
 
                 if (!snapshot.exists()) {
 
                     Log.d(
                             TAG,
-                            "Nó \"estado\" ainda não existe."
+                            "Nó da ESP32 ainda não existe."
                     );
 
                     callback.onErro(
@@ -77,9 +146,9 @@ public class FirebaseFluxo implements FonteDadosFluxo {
                     return;
                 }
 
-                // ==========================================
+                // =================================================
                 // CONVERTER
-                // ==========================================
+                // =================================================
 
                 try {
 
@@ -88,7 +157,8 @@ public class FirebaseFluxo implements FonteDadosFluxo {
 
                     Log.d(
                             TAG,
-                            "Dados recebidos:"
+                            "Dados recebidos da ESP32 "
+                                    + dispositivoId
                     );
 
                     Log.d(
@@ -104,7 +174,9 @@ public class FirebaseFluxo implements FonteDadosFluxo {
                                     + dados.getLitrosHoje()
                     );
 
-                    callback.onSucesso(dados);
+                    callback.onSucesso(
+                            dados
+                    );
 
                 } catch (Exception e) {
 
@@ -138,7 +210,9 @@ public class FirebaseFluxo implements FonteDadosFluxo {
             }
         };
 
-        referencia.addValueEventListener(listener);
+        referencia.addValueEventListener(
+                listener
+        );
     }
 
     // =============================================================
@@ -152,12 +226,13 @@ public class FirebaseFluxo implements FonteDadosFluxo {
         DadosEsp32 dados =
                 new DadosEsp32();
 
-        // ==========================================
+        // =========================================================
         // VAZÃO
-        // ==========================================
+        // =========================================================
 
         Double litrosMinuto =
-                snapshot.child("litrosMinuto")
+                snapshot
+                        .child("litrosMinuto")
                         .getValue(Double.class);
 
         if (litrosMinuto != null) {
@@ -167,12 +242,13 @@ public class FirebaseFluxo implements FonteDadosFluxo {
             );
         }
 
-        // ==========================================
+        // =========================================================
         // LITROS HOJE
-        // ==========================================
+        // =========================================================
 
         Double litrosHoje =
-                snapshot.child("litrosHoje")
+                snapshot
+                        .child("litrosHoje")
                         .getValue(Double.class);
 
         if (litrosHoje != null) {
@@ -182,29 +258,35 @@ public class FirebaseFluxo implements FonteDadosFluxo {
             );
         }
 
-        // ==========================================
+        // =========================================================
         // ONLINE
-        // ==========================================
+        // =========================================================
 
         Boolean online =
-                snapshot.child("online")
+                snapshot
+                        .child("online")
                         .getValue(Boolean.class);
 
         if (online != null) {
 
-            dados.setOnline(online);
+            dados.setOnline(
+                    online
+            );
 
         } else {
 
-            dados.setOnline(true);
+            dados.setOnline(
+                    true
+            );
         }
 
-        // ==========================================
+        // =========================================================
         // ÚLTIMA ATUALIZAÇÃO
-        // ==========================================
+        // =========================================================
 
         Long ultimaAtualizacao =
-                snapshot.child("ultimaAtualizacao")
+                snapshot
+                        .child("ultimaAtualizacao")
                         .getValue(Long.class);
 
         if (ultimaAtualizacao != null) {
@@ -214,17 +296,10 @@ public class FirebaseFluxo implements FonteDadosFluxo {
             );
         }
 
-        // ==========================================
-        // VAZAMENTO / ÁGUA POUPADA / ÁGUA PERDIDA /
-        // INÍCIO DO VAZAMENTO
-        // ==========================================
-        //
-        // A ESP32 não manda esses campos — eles são
-        // calculados no próprio app (DetectorVazamento
-        // e CalculadoraConsumo), então ficam com o valor
-        // padrão aqui e são preenchidos depois, no
-        // RepositorioFluxo.
-        // ==========================================
+        /*
+         * Vazamento, água poupada e água perdida continuam
+         * sendo tratados pelo RepositorioFluxo.
+         */
 
         return dados;
     }
@@ -236,9 +311,11 @@ public class FirebaseFluxo implements FonteDadosFluxo {
     @Override
     public void pararLeitura() {
 
-        if (listener != null) {
+        if (listener != null && referencia != null) {
 
-            referencia.removeEventListener(listener);
+            referencia.removeEventListener(
+                    listener
+            );
 
             listener = null;
 

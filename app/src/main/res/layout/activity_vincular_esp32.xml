@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@android:color/white"
+    android:padding="24dp">
+
+    <!-- BOTÃO VOLTAR -->
+
+    <LinearLayout
+        android:id="@+id/btnVoltarVincular"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="8dp"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="‹"
+            android:textSize="32sp"
+            android:textColor="#000000"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Voltar"
+            android:textSize="16sp"
+            android:textColor="#000000" />
+
+    </LinearLayout>
+
+
+    <!-- TÍTULO -->
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Vincular ESP32"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="#000000"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="8dp" />
+
+
+    <!-- DESCRIÇÃO -->
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Digite o código mostrado pela sua ESP32 para adicionar o dispositivo à sua conta."
+        android:textSize="16sp"
+        android:textColor="#666666"
+        android:lineSpacingExtra="4dp"
+        android:layout_marginBottom="28dp" />
+
+
+    <!-- CÓDIGO -->
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Código da ESP32"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="#000000"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/etCodigoEsp32"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:hint="Ex.: 123456"
+        android:textSize="18sp"
+        android:inputType="number"
+        android:maxLength="6"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="@drawable/bg_botao_outline"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="20dp" />
+
+
+    <!-- NOME -->
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Nome do dispositivo"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="#000000"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/etNomeEsp32"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:hint="Ex.: ESP da Casa"
+        android:textSize="16sp"
+        android:inputType="textCapSentences"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="@drawable/bg_botao_outline"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="20dp" />
+
+
+    <!-- LOCAL -->
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Local"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="#000000"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/etLocalEsp32"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:hint="Ex.: Banheiro"
+        android:textSize="16sp"
+        android:inputType="textCapSentences"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="@drawable/bg_botao_outline"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="32dp" />
+
+
+    <!-- BOTÃO VINCULAR -->
+
+    <Button
+        android:id="@+id/btnVincularEsp32"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:text="Vincular ESP32"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:background="@drawable/bg_botao_azul"
+        android:textAllCaps="false" />
+
+</LinearLayout>
