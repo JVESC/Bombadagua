@@ -8,101 +8,186 @@ import java.util.Locale;
 
 public class CalculadoraConsumo {
 
-    private static final double FATOR_ECONOMIA = 0.20;
+    private static final double FATOR_ECONOMIA =
+            0.20;
 
     private static final SimpleDateFormat FORMATO_DATA =
-            new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            new SimpleDateFormat(
+                    "yyyy-MM-dd",
+                    Locale.getDefault()
+            );
 
-    // Água perdida no vazamento atual
-    private double aguaPerdida = 0.0;
+    // =============================================================
+    // VAZAMENTO
+    // =============================================================
 
-    // Água perdida no último vazamento finalizado
-    private double aguaPerdidaFinalizada = 0.0;
+    private double aguaPerdida =
+            0.0;
 
-    // Última leitura durante o vazamento
-    private long ultimaLeituraVazamento = 0;
+    private double aguaPerdidaFinalizada =
+            0.0;
 
-    // Estado anterior do vazamento
-    private boolean vazamentoAnterior = false;
+    private long ultimaLeituraVazamento =
+            0;
+
+    private boolean vazamentoAnterior =
+            false;
+
+    // =============================================================
+    // CALCULAR
+    // =============================================================
 
     public DadosEsp32 calcular(
             DadosEsp32 dados,
-            ConsumoManager consumoManager
+            ConsumoManager consumoManager,
+            String dispositivoId
     ) {
+
+        if (dados == null) {
+            return null;
+        }
 
         long agora =
                 System.currentTimeMillis();
 
         // =========================================================
-        // LITROS HOJE
-        // =========================================================
-        //
-        // A ESP32 manda em "litrosHoje" um total ACUMULADO desde a
-        // última vez que ela foi ligada — não zera à meia-noite.
-        // Por isso calculamos aqui o "hoje de verdade": o valor
-        // bruto da ESP menos o valor que ela já tinha no começo
-        // do dia (baseline), guardado no celular.
+        // CONSUMO
         // =========================================================
 
         double litrosBrutoEsp =
                 dados.getLitrosHoje();
 
         String hojeStr =
-                FORMATO_DATA.format(new Date());
+                FORMATO_DATA.format(
+                        new Date()
+                );
 
-        String diaSalvo =
-                consumoManager.getData();
+        String dataSalva =
+                consumoManager.getData(
+                        dispositivoId
+                );
 
-        double baseline =
-                consumoManager.getBaseline();
+        double litrosHoje =
+                consumoManager.getLitrosHoje(
+                        dispositivoId
+                );
 
-        if (!hojeStr.equals(diaSalvo)) {
+        double ultimoRaw =
+                consumoManager.getUltimoRaw(
+                        dispositivoId
+                );
 
-            // =====================================================
-            // VIROU O DIA (ou é a primeira leitura de sempre)
-            //
-            // Tudo que a ESP já tinha acumulado até agora passa a
-            // ser "baseline": não conta como consumo de hoje.
-            // =====================================================
+        // =========================================================
+        // PRIMEIRA LEITURA DO DIA
+        // =========================================================
 
-            baseline = litrosBrutoEsp;
+        if (
+                !hojeStr.equals(dataSalva)
+        ) {
 
-            consumoManager.salvarData(hojeStr);
-            consumoManager.salvarBaseline(baseline);
+            /*
+             * Começamos um novo dia.
+             *
+             * O valor atual da ESP não é considerado consumo
+             * retroativo do aplicativo.
+             *
+             * A partir desta leitura começamos a acompanhar
+             * as diferenças.
+             */
+
+            litrosHoje = 0.0;
+
+            consumoManager.salvarData(
+                    dispositivoId,
+                    hojeStr
+            );
+
+            consumoManager.salvarUltimoRaw(
+                    dispositivoId,
+                    litrosBrutoEsp
+            );
+
+            consumoManager.salvarLitrosHoje(
+                    dispositivoId,
+                    litrosHoje
+            );
 
             LogHelper.log(
-                    "Novo dia detectado. Baseline: "
-                            + baseline
+                    "Novo dia para a ESP "
+                            + dispositivoId
+                            + ". Leitura inicial: "
+                            + litrosBrutoEsp
                             + " L"
             );
 
-        } else if (litrosBrutoEsp < baseline) {
+        } else {
 
             // =====================================================
-            // A ESP32 REINICIOU NO MEIO DO DIA
-            //
-            // O contador dela voltou pra perto de zero, então o
-            // valor atual já é, sozinho, o consumo de hoje a
-            // partir daqui (perdemos só o que já tinha sido
-            // contado antes do reinício, que é inevitável sem a
-            // ESP guardar o "hoje" na própria memória dela).
+            // MESMO DIA
             // =====================================================
 
-            baseline = 0.0;
+            double diferenca =
+                    litrosBrutoEsp - ultimoRaw;
 
-            consumoManager.salvarBaseline(baseline);
+            if (diferenca >= 0) {
 
-            LogHelper.log(
-                    "ESP32 reiniciou durante o dia. "
-                            + "Baseline zerada."
+                /*
+                 * A ESP continuou contando normalmente.
+                 */
+                litrosHoje += diferenca;
+
+            } else {
+
+                /*
+                 * O contador da ESP voltou para um valor menor.
+                 *
+                 * Isso normalmente significa que a ESP32 foi
+                 * reiniciada.
+                 *
+                 * Nesse caso consideramos o valor atual como
+                 * consumo desde o reinício.
+                 */
+
+                LogHelper.log(
+                        "Reinício da ESP32 detectado."
+                                + " Último valor: "
+                                + ultimoRaw
+                                + " L"
+                                + " | Atual: "
+                                + litrosBrutoEsp
+                                + " L"
+                );
+
+                litrosHoje +=
+                        Math.max(
+                                litrosBrutoEsp,
+                                0.0
+                        );
+            }
+
+            consumoManager.salvarUltimoRaw(
+                    dispositivoId,
+                    litrosBrutoEsp
+            );
+
+            consumoManager.salvarLitrosHoje(
+                    dispositivoId,
+                    litrosHoje
             );
         }
 
-        double litrosHoje =
-                litrosBrutoEsp - baseline;
+        // =========================================================
+        // SEGURANÇA
+        // =========================================================
 
         if (litrosHoje < 0) {
-            litrosHoje = 0;
+
+            litrosHoje = 0.0;
+
+            consumoManager.salvarLitrosHoje(
+                    dispositivoId,
+                    litrosHoje
+            );
         }
 
         // =========================================================
@@ -110,7 +195,8 @@ public class CalculadoraConsumo {
         // =========================================================
 
         double aguaPoupada =
-                litrosHoje * FATOR_ECONOMIA;
+                litrosHoje
+                        * FATOR_ECONOMIA;
 
         // =========================================================
         // ÁGUA PERDIDA
@@ -124,7 +210,8 @@ public class CalculadoraConsumo {
 
             if (!vazamentoAnterior) {
 
-                aguaPerdida = 0.0;
+                aguaPerdida =
+                        0.0;
 
                 ultimaLeituraVazamento =
                         agora;
@@ -136,24 +223,32 @@ public class CalculadoraConsumo {
             } else {
 
                 // =================================================
-                // INTERVALO
+                // TEMPO DESDE A ÚLTIMA LEITURA
                 // =================================================
 
                 double segundos =
-                        (agora - ultimaLeituraVazamento)
+                        (
+                                agora
+                                        - ultimaLeituraVazamento
+                        )
                                 / 1000.0;
 
                 double litrosPerdidos =
-                        (dados.getLitrosMinuto() / 60.0)
+                        (
+                                dados.getLitrosMinuto()
+                                        / 60.0
+                        )
                                 * segundos;
 
-                aguaPerdida += litrosPerdidos;
+                aguaPerdida +=
+                        litrosPerdidos;
 
                 ultimaLeituraVazamento =
                         agora;
             }
 
-            vazamentoAnterior = true;
+            vazamentoAnterior =
+                    true;
 
         } else {
 
@@ -174,15 +269,18 @@ public class CalculadoraConsumo {
                 );
             }
 
-            vazamentoAnterior = false;
+            vazamentoAnterior =
+                    false;
 
-            ultimaLeituraVazamento = 0;
+            ultimaLeituraVazamento =
+                    0;
 
-            aguaPerdida = 0.0;
+            aguaPerdida =
+                    0.0;
         }
 
         // =========================================================
-        // RESULTADOS
+        // DEVOLVER RESULTADOS
         // =========================================================
 
         dados.setLitrosHoje(
@@ -210,12 +308,14 @@ public class CalculadoraConsumo {
     }
 
     // =============================================================
-    // PEQUENO HELPER DE LOG
+    // LOG
     // =============================================================
 
     private static class LogHelper {
 
-        static void log(String mensagem) {
+        static void log(
+                String mensagem
+        ) {
 
             android.util.Log.d(
                     "CALCULADORA",

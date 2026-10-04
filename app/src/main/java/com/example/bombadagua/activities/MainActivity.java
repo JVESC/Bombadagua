@@ -39,6 +39,11 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+import android.view.Gravity;
+import android.widget.LinearLayout;
+
 public class MainActivity extends AppCompatActivity {
 
     // =============================================================
@@ -50,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvStatusEsp;
     private TextView tvStatusVazamento;
 
+    private AlertDialog dialogAtual;
     private TextView tvDispositivoSelecionado;
 
     private Button btnSelecionarEsp32;
@@ -89,6 +95,266 @@ public class MainActivity extends AppCompatActivity {
     // LISTENER DO FLUXO
     // =============================================================
 
+
+    private LinearLayout criarCardDispositivo(
+            DispositivoEsp32 dispositivo,
+            boolean selecionado
+    ) {
+
+        LinearLayout card =
+                new LinearLayout(this);
+
+        card.setOrientation(
+                LinearLayout.HORIZONTAL
+        );
+
+        card.setGravity(
+                Gravity.CENTER_VERTICAL
+        );
+
+        card.setPadding(
+                dp(16),
+                dp(14),
+                dp(16),
+                dp(14)
+        );
+
+        // =============================================================
+        // FUNDO DO CARD
+        // =============================================================
+
+        GradientDrawable fundo =
+                new GradientDrawable();
+
+        fundo.setCornerRadius(
+                dp(16)
+        );
+
+        if (selecionado) {
+
+            fundo.setColor(
+                    Color.rgb(232, 244, 255)
+            );
+
+            fundo.setStroke(
+                    dp(2),
+                    Color.rgb(80, 150, 220)
+            );
+
+        } else {
+
+            fundo.setColor(
+                    Color.WHITE
+            );
+
+            fundo.setStroke(
+                    dp(1),
+                    Color.rgb(225, 225, 225)
+            );
+        }
+
+        card.setBackground(
+                fundo
+        );
+
+        // =============================================================
+        // ÍCONE
+        // =============================================================
+
+        TextView icone =
+                new TextView(this);
+
+        icone.setText("💧");
+
+        icone.setTextSize(25);
+
+        icone.setGravity(
+                Gravity.CENTER
+        );
+
+        GradientDrawable fundoIcone =
+                new GradientDrawable();
+
+        fundoIcone.setShape(
+                GradientDrawable.OVAL
+        );
+
+        fundoIcone.setColor(
+                Color.rgb(225, 241, 255)
+        );
+
+        icone.setBackground(
+                fundoIcone
+        );
+
+        LinearLayout.LayoutParams paramsIcone =
+                new LinearLayout.LayoutParams(
+                        dp(48),
+                        dp(48)
+                );
+
+        card.addView(
+                icone,
+                paramsIcone
+        );
+
+        // =============================================================
+        // INFORMAÇÕES
+        // =============================================================
+
+        LinearLayout informacoes =
+                new LinearLayout(this);
+
+        informacoes.setOrientation(
+                LinearLayout.VERTICAL
+        );
+
+        informacoes.setPadding(
+                dp(14),
+                0,
+                dp(8),
+                0
+        );
+
+        LinearLayout.LayoutParams paramsInfo =
+                new LinearLayout.LayoutParams(
+                        0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        1
+                );
+
+        // NOME
+
+        TextView nome =
+                new TextView(this);
+
+        String nomeDispositivo =
+                dispositivo.getNome();
+
+        if (nomeDispositivo == null
+                || nomeDispositivo.trim().isEmpty()) {
+
+            nomeDispositivo = "ESP32";
+        }
+
+        nome.setText(
+                nomeDispositivo
+        );
+
+        nome.setTextSize(16);
+        nome.setTextColor(Color.BLACK);
+        nome.setTypeface(
+                null,
+                android.graphics.Typeface.BOLD
+        );
+
+        informacoes.addView(
+                nome
+        );
+
+        // LOCAL
+
+        TextView local =
+                new TextView(this);
+
+        String localDispositivo =
+                dispositivo.getLocal();
+
+        if (localDispositivo == null
+                || localDispositivo.trim().isEmpty()) {
+
+            localDispositivo =
+                    "Local não informado";
+        }
+
+        local.setText(
+                localDispositivo
+        );
+
+        local.setTextSize(13);
+        local.setTextColor(
+                Color.rgb(110, 110, 110)
+        );
+
+        local.setPadding(
+                0,
+                dp(3),
+                0,
+                0
+        );
+
+        informacoes.addView(
+                local
+        );
+
+        // ID
+
+        TextView id =
+                new TextView(this);
+
+        id.setText(
+                dispositivo.getDispositivoId()
+        );
+
+        id.setTextSize(11);
+        id.setTextColor(
+                Color.rgb(150, 150, 150)
+        );
+
+        id.setPadding(
+                0,
+                dp(4),
+                0,
+                0
+        );
+
+        informacoes.addView(
+                id
+        );
+
+        card.addView(
+                informacoes,
+                paramsInfo
+        );
+
+        // =============================================================
+        // INDICADOR DE SELEÇÃO
+        // =============================================================
+
+        TextView check =
+                new TextView(this);
+
+        check.setText(
+                selecionado ? "✓" : "›"
+        );
+
+        check.setTextSize(
+                selecionado ? 24 : 28
+        );
+
+        check.setTextColor(
+                selecionado
+                        ? Color.rgb(45, 125, 70)
+                        : Color.rgb(140, 140, 140)
+        );
+
+        check.setGravity(
+                Gravity.CENTER
+        );
+
+        LinearLayout.LayoutParams paramsCheck =
+                new LinearLayout.LayoutParams(
+                        dp(36),
+                        dp(48)
+                );
+
+        card.addView(
+                check,
+                paramsCheck
+        );
+
+        return card;
+    }
     private final RepositorioFluxo.Listener listener =
             new RepositorioFluxo.Listener() {
 
@@ -656,12 +922,15 @@ public class MainActivity extends AppCompatActivity {
             DispositivoEsp32 dispositivo
     ) {
 
-        dispositivoSelecionado =
-                dispositivo;
+        if (dispositivo == null) {
+            return;
+        }
 
-        // ---------------------------------------------------------
-        // SALVAR PREFERÊNCIA
-        // ---------------------------------------------------------
+        dispositivoSelecionado = dispositivo;
+
+        // =============================================================
+        // SALVAR ESP SELECIONADA
+        // =============================================================
 
         getSharedPreferences(
                 "dispositivo_selecionado",
@@ -674,19 +943,42 @@ public class MainActivity extends AppCompatActivity {
                 )
                 .apply();
 
-        // ---------------------------------------------------------
-        // ATUALIZAR NOME NA TELA
-        // ---------------------------------------------------------
+        // =============================================================
+        // MOSTRAR ESP NO BOTÃO PRINCIPAL
+        // =============================================================
 
-        tvDispositivoSelecionado.setText(
-                dispositivo.getNome()
-                        + " • "
-                        + dispositivo.getLocal()
+        String nome = dispositivo.getNome();
+
+        if (nome == null || nome.trim().isEmpty()) {
+            nome = "ESP32";
+        }
+
+        btnSelecionarEsp32.setText(
+                "💧  " + nome + "   ▼"
         );
 
-        // ---------------------------------------------------------
+        // =============================================================
+        // INFORMAÇÃO SECUNDÁRIA
+        // =============================================================
+
+        String local = dispositivo.getLocal();
+
+        if (local != null && !local.trim().isEmpty()) {
+
+            tvDispositivoSelecionado.setText(
+                    "Monitorando • " + local
+            );
+
+        } else {
+
+            tvDispositivoSelecionado.setText(
+                    "ESP32 selecionada"
+            );
+        }
+
+        // =============================================================
         // INFORMAR AO REPOSITÓRIO
-        // ---------------------------------------------------------
+        // =============================================================
 
         repositorioFluxo.selecionarDispositivo(
                 dispositivo.getDispositivoId()
@@ -706,71 +998,124 @@ public class MainActivity extends AppCompatActivity {
     private void mostrarSeletorEsp32() {
 
         if (dispositivos.isEmpty()) {
-
             mostrarSemDispositivos();
-
             return;
         }
 
-        String[] nomes =
-                new String[
-                        dispositivos.size()
-                        ];
+        // =============================================================
+        // CONTAINER PRINCIPAL
+        // =============================================================
 
-        int dispositivoAtual = 0;
+        LinearLayout container = new LinearLayout(this);
 
-        for (
-                int i = 0;
-                i < dispositivos.size();
-                i++
-        ) {
+        container.setOrientation(
+                LinearLayout.VERTICAL
+        );
 
-            DispositivoEsp32 dispositivo =
-                    dispositivos.get(i);
+        container.setPadding(
+                dp(20),
+                dp(8),
+                dp(20),
+                dp(8)
+        );
 
-            nomes[i] =
-                    dispositivo.getNome()
-                            + "\n"
-                            + dispositivo.getLocal();
+        // =============================================================
+        // SUBTÍTULO
+        // =============================================================
 
-            if (
+        TextView subtitulo = new TextView(this);
+
+        subtitulo.setText(
+                "Escolha qual ESP32 você deseja monitorar"
+        );
+
+        subtitulo.setTextSize(14);
+        subtitulo.setTextColor(
+                Color.rgb(100, 100, 100)
+        );
+
+        subtitulo.setPadding(
+                dp(4),
+                dp(4),
+                dp(4),
+                dp(16)
+        );
+
+        container.addView(
+                subtitulo
+        );
+
+        // =============================================================
+        // CARDS DAS ESP32
+        // =============================================================
+
+        for (DispositivoEsp32 dispositivo : dispositivos) {
+
+            boolean selecionado =
                     dispositivoSelecionado != null
                             &&
                             dispositivo.getDispositivoId()
                                     .equals(
                                             dispositivoSelecionado
                                                     .getDispositivoId()
-                                    )
-            ) {
-
-                dispositivoAtual = i;
-            }
-        }
-
-        AlertDialog dialog =
-                new AlertDialog.Builder(
-                        this
-                )
-                        .setTitle(
-                                "Selecionar ESP32"
-                        )
-                        .setSingleChoiceItems(
-                                nomes,
-                                dispositivoAtual,
-                                (dialogInterface, which) -> {
-
-                                    selecionarDispositivo(
-                                            dispositivos.get(which)
                                     );
 
-                                    dialogInterface.dismiss();
-                                }
-                        )
+            LinearLayout card =
+                    criarCardDispositivo(
+                            dispositivo,
+                            selecionado
+                    );
+
+            card.setOnClickListener(v -> {
+
+                selecionarDispositivo(
+                        dispositivo
+                );
+
+                if (dialogAtual != null) {
+                    dialogAtual.dismiss();
+                }
+            });
+
+            container.addView(card);
+
+            // Espaço entre os cards
+            LinearLayout.LayoutParams espaco =
+                    new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            dp(10)
+                    );
+
+            View separador = new View(this);
+
+            separador.setLayoutParams(
+                    espaco
+            );
+
+            container.addView(
+                    separador
+            );
+        }
+
+        // =============================================================
+        // DIALOG
+        // =============================================================
+
+        AlertDialog dialog =
+                new AlertDialog.Builder(this)
+                        .setTitle("Selecionar ESP32")
+                        .setView(container)
                         .setNegativeButton(
                                 "Cancelar",
                                 null
                         )
                         .create();
+
+        dialogAtual = dialog;
+
+        dialog.setOnDismissListener(
+                d -> dialogAtual = null
+        );
 
         dialog.show();
     }
@@ -921,22 +1266,23 @@ public class MainActivity extends AppCompatActivity {
                 "onStart"
         );
 
+        /*
+         * O listener da Activity deve ser registrado sempre que
+         * a Activity estiver visível.
+         *
+         * O RepositorioFluxo decide se já existe uma ESP32
+         * selecionada e, se existir, inicia o monitoramento.
+         */
         if (repositorioFluxo != null) {
 
-            /*
-             * Só começa a leitura depois que uma ESP32
-             * tiver sido selecionada.
-             */
-            if (
-                    dispositivoSelecionado != null
-            ) {
-
-                repositorioFluxo
-                        .adicionarListener(
-                                listener
-                        );
-            }
+            repositorioFluxo.adicionarListener(
+                    listener
+            );
         }
+
+        // =========================================================
+        // MONITORAR CONECTIVIDADE
+        // =========================================================
 
         if (connectivityManager != null) {
 
@@ -1018,5 +1364,8 @@ public class MainActivity extends AppCompatActivity {
 
             networkCallback = null;
         }
+    }
+    private int dp(int valor) {
+        return (int) (valor * getResources().getDisplayMetrics().density + 0.5f);
     }
 }

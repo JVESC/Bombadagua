@@ -151,10 +151,10 @@ public class RepositorioFluxo {
                 "================================="
         );
 
-        /*
-         * Quando estamos usando FirebaseFluxo, informamos
-         * qual ESP32 deverá ser lida.
-         */
+        // =========================================================
+        // INFORMAR A ESP32 AO FIREBASEFLUXO
+        // =========================================================
+
         if (fonteDados instanceof FirebaseFluxo) {
 
             FirebaseFluxo firebaseFluxo =
@@ -165,17 +165,38 @@ public class RepositorioFluxo {
             );
         }
 
-        /*
-         * Se o monitoramento já estava funcionando,
-         * reiniciamos a leitura para usar a nova ESP32.
-         */
+        // =========================================================
+        // CONTROLAR MONITORAMENTO
+        // =========================================================
+        //
+        // Se já existem listeners da Activity, significa que a tela
+        // está ativa e precisamos começar a receber os dados.
+        //
+        // Se o monitoramento já estava funcionando, reiniciamos o
+        // listener para trocar para a nova ESP32.
+        // =========================================================
+
         if (iniciado) {
+
+            Log.d(
+                    "REPOSITORIO",
+                    "Trocando ESP32. Reiniciando monitoramento."
+            );
 
             fonteDados.pararLeitura();
 
             fonteDados.iniciarLeituraContinua(
                     criarCallback()
             );
+
+        } else if (!listeners.isEmpty()) {
+
+            Log.d(
+                    "REPOSITORIO",
+                    "ESP32 selecionada com Activity ativa."
+            );
+
+            iniciarFonteDados();
         }
     }
 
@@ -211,9 +232,36 @@ public class RepositorioFluxo {
                         + listeners.size()
         );
 
+        // =========================================================
+        // NÃO INICIAR SEM ESP32
+        // =========================================================
+
+        if (
+                dispositivoSelecionadoId == null
+                        ||
+                        dispositivoSelecionadoId.trim().isEmpty()
+        ) {
+
+            Log.d(
+                    "REPOSITORIO",
+                    "Listener registrado, mas nenhuma ESP32 "
+                            + "foi selecionada ainda."
+            );
+
+            return;
+        }
+
+        // =========================================================
+        // JÁ ESTÁ FUNCIONANDO
+        // =========================================================
+
         if (iniciado) {
             return;
         }
+
+        // =========================================================
+        // INICIAR
+        // =========================================================
 
         iniciarFonteDados();
     }
@@ -409,7 +457,8 @@ public class RepositorioFluxo {
         DadosEsp32 dadosCalculados =
                 calculadora.calcular(
                         dadosAnalisados,
-                        consumoManager
+                        consumoManager,
+                        dispositivoSelecionadoId
                 );
 
         // =========================================================
